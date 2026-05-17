@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AirBnB NYC Dashboard — Khandker Qaiduzzaman</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:         #ffffff;
+      --bg2:        #f7f9fb;
+      --navy:       #0b2545;
+      --teal:       #0e7c86;
+      --teal-light: #e6f4f5;
+      --teal-mid:   #b2dde2;
+      --text:       #1a2332;
+      --muted:      #5a6a7a;
+      --muted2:     #8a9aaa;
+      --border:     #dde5ed;
+      --border2:    #c8d5e0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 5rem; height: 64px;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem; font-weight: 600;
+      color: var(--navy); letter-spacing: 0.02em; text-decoration: none;
+    }
+    .nav-logo span { color: var(--teal); }
+    .nav-right { display: flex; align-items: center; gap: 2.5rem; }
+    .nav-right a {
+      font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 500;
+      color: var(--muted); text-decoration: none; letter-spacing: 0.08em;
+      text-transform: uppercase; transition: color 0.2s;
+    }
+    .nav-right a:hover { color: var(--teal); }
+
+    /* ── HERO STRIP ── */
+    .hero-strip {
+      margin-top: 64px;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      border-bottom: 1px solid var(--border);
+      min-height: 56vh;
+    }
+    .hero-main {
+      padding: 5rem 5rem 4.5rem;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      border-right: 1px solid var(--border);
+    }
+    .breadcrumb {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      color: var(--muted2); letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 3.5rem;
+    }
+    .breadcrumb a { color: var(--teal); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb-sep { color: var(--border2); }
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+      color: var(--teal); letter-spacing: 0.14em; text-transform: uppercase;
+      margin-bottom: 1.1rem;
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .hero-eyebrow::before { content: ''; width: 28px; height: 1px; background: var(--teal); }
+    .hero-h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.8rem, 5.5vw, 4.2rem);
+      font-weight: 300; color: var(--navy);
+      line-height: 1.08; letter-spacing: -0.01em;
+      margin-bottom: 1.5rem;
+    }
+    .hero-h1 strong { font-weight: 600; }
+    .hero-h1 em { color: var(--teal); font-style: italic; }
+    .hero-desc {
+      font-size: 0.95rem; color: var(--muted); font-weight: 300;
+      max-width: 540px; line-height: 1.85; margin-bottom: 2.25rem;
+    }
+    .tag-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .tag {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0.25rem 0.65rem;
+      border: 1px solid var(--teal-mid);
+      background: var(--teal-light);
+      color: var(--teal);
+    }
+
+    /* right meta column */
+    .hero-meta {
+      padding: 5rem 2.5rem 4.5rem;
+      background: var(--bg2);
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+    .meta-item {
+      padding: 1.1rem 0;
+      border-top: 1px solid var(--border);
+    }
+    .meta-key {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+      color: var(--muted2); letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 0.3rem;
+    }
+    .meta-val {
+      font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--text);
+    }
+    .meta-val.live { color: var(--teal); }
+
+    /* ── PAGE BODY ── */
+    .page { max-width: 1160px; margin: 0 auto; padding: 0 5rem; }
+
+    .rail-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+      color: var(--teal); letter-spacing: 0.15em; text-transform: uppercase;
+      padding-top: 0.3rem;
+    }
+    .rail-label span { display: block; color: var(--muted2); font-size: 0.58rem; margin-top: 0.3rem; }
+
+    /* ── ABOUT SECTION ── */
+    .section-about {
+      padding: 5rem 0;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 180px 1fr 1fr;
+      gap: 4.5rem;
+      align-items: start;
+    }
+    .prose p {
+      font-size: 0.925rem; color: var(--muted); font-weight: 300;
+      line-height: 1.9; margin-bottom: 1rem;
+    }
+    .prose p:last-child { margin-bottom: 0; }
+    .prose strong { color: var(--text); font-weight: 500; }
+
+    /* ── TABLEAU EMBED ── */
+    .section-viz {
+      padding: 5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .viz-top {
+      display: grid;
+      grid-template-columns: 180px 1fr auto;
+      gap: 2rem; align-items: flex-start;
+      margin-bottom: 2rem;
+    }
+    .viz-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem; font-weight: 600; color: var(--navy); line-height: 1.2;
+    }
+    .viz-sub {
+      font-size: 0.85rem; color: var(--muted); font-weight: 300; margin-top: 0.35rem;
+    }
+    .open-full {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+      color: var(--teal); text-decoration: none; letter-spacing: 0.08em;
+      text-transform: uppercase; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      transition: opacity 0.2s; padding-top: 0.3rem;
+    }
+    .open-full:hover { opacity: 0.65; }
+    .tableau-wrap {
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      overflow: hidden;
+    }
+    .viz-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.8rem 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+    .viz-footer-note {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+      color: var(--muted2); letter-spacing: 0.05em;
+    }
+
+    /* ── SKILLS + TOOLS ── */
+    .section-skills {
+      padding: 5rem 0;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 180px 1fr 1fr;
+      gap: 4.5rem;
+      align-items: start;
+    }
+    .learned-list { list-style: none; display: flex; flex-direction: column; gap: 1px; }
+    .learned-item {
+      background: var(--bg2); border: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      display: flex; gap: 0.9rem; align-items: flex-start;
+    }
+    .learned-num {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+      color: var(--teal); flex-shrink: 0; margin-top: 0.22rem;
+    }
+    .learned-text {
+      font-size: 0.875rem; color: var(--muted); font-weight: 300; line-height: 1.6;
+    }
+    .learned-text strong { color: var(--text); font-weight: 500; }
+
+    .tools-table { width: 100%; border-collapse: collapse; border: 1px solid var(--border); }
+    .tools-table tr { border-bottom: 1px solid var(--border); }
+    .tools-table tr:last-child { border-bottom: none; }
+    .tools-table td { padding: 0.85rem 1.1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; }
+    .tools-table td:first-child {
+      color: var(--teal); letter-spacing: 0.08em; text-transform: uppercase;
+      font-size: 0.6rem; background: var(--bg2);
+      border-right: 1px solid var(--border); white-space: nowrap; width: 110px;
+    }
+    .tools-table td:last-child { color: var(--muted); }
+
+    /* ── CTA ── */
+    .section-cta {
+      padding: 3.5rem 0;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .cta-text h3 {
+      font-family: 'Cormorant Garamond', serif; font-size: 1.55rem;
+      font-weight: 600; color: var(--navy); margin-bottom: 0.25rem;
+    }
+    .cta-text p { font-size: 0.875rem; color: var(--muted); font-weight: 300; }
+    .btn-row { display: flex; gap: 0.75rem; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.7rem 1.5rem; font-family: 'Inter', sans-serif;
+      font-size: 0.78rem; font-weight: 500; letter-spacing: 0.06em;
+      text-transform: uppercase; text-decoration: none;
+      border-radius: 2px; transition: all 0.2s; cursor: pointer; border: none;
+    }
+    .btn-primary { background: var(--navy); color: #fff; }
+    .btn-primary:hover { background: var(--teal); }
+    .btn-outline { border: 1.5px solid var(--border2); color: var(--navy); background: transparent; }
+    .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 1.75rem 5rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    footer p {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+      color: var(--muted2); letter-spacing: 0.06em;
+    }
+
+    /* ── REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+      nav { padding: 0 1.5rem; }
+      .hero-strip { grid-template-columns: 1fr; }
+      .hero-main { padding: 3.5rem 1.5rem 2.5rem; }
+      .hero-meta { padding: 2rem 1.5rem; flex-direction: row; flex-wrap: wrap; border-top: 1px solid var(--border); }
+      .meta-item { flex: 1 1 45%; }
+      .page { padding: 0 1.5rem; }
+      .section-about, .section-skills { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 0; }
+      .viz-top { grid-template-columns: 1fr; gap: 0.75rem; }
+      .section-viz { padding: 3rem 0; }
+      .section-cta { flex-direction: column; gap: 2rem; align-items: flex-start; padding: 3rem 0; }
+      footer { padding: 1.5rem; flex-direction: column; gap: 0.5rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">Khandker <span>Portfolio</span></a>
+  <div class="nav-right">
+    <a href="index.html#projects">← All Projects</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+</nav>
+
+<!-- HERO STRIP -->
+<div class="hero-strip">
+  <div class="hero-main">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="index.html#projects">Projects</a>
+      <span class="breadcrumb-sep">/</span>
+      <span>AirBnB NYC Dashboard</span>
+    </div>
+    <div class="hero-eyebrow">Data Visualization · Skill Project</div>
+    <h1 class="hero-h1">
+      <strong>AirBnB</strong><br><em>NYC Dashboard</em>
+    </h1>
+    <p class="hero-desc">
+      A self-directed Tableau project exploring New York City's short-term rental 
+      landscape through interactive filtering, geographic views, and pricing analysis 
+      across all five boroughs — built purely to sharpen dashboard design skills.
+    </p>
+    <div class="tag-row">
+      <span class="tag">Tableau</span>
+      <span class="tag">Data Visualization</span>
+      <span class="tag">NYC Open Data</span>
+      <span class="tag">Dashboard Design</span>
+      <span class="tag">Skill Building</span>
+    </div>
+  </div>
+  <div class="hero-meta">
+    <div class="meta-item">
+      <div class="meta-key">Tool</div>
+      <div class="meta-val">Tableau Public</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-key">Dataset</div>
+      <div class="meta-val">Inside AirBnB · NYC Listings</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-key">Type</div>
+      <div class="meta-val">Personal Skill Project</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-key">Status</div>
+      <div class="meta-val live">Published · Live</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE BODY -->
+<div class="page">
+
+  <!-- 01 ABOUT -->
+  <div class="section-about reveal">
+    <div class="rail-label">01<span>About</span></div>
+    <div class="prose">
+      <p>
+        This project exists entirely outside my professional work — and that's 
+        intentional. Personal projects give me a space to practice <strong>design 
+        decisions I don't always control at work</strong>: what chart types to use, 
+        how to layer information, how much to show upfront versus hide behind a filter.
+      </p>
+      <p>
+        I chose the AirBnB NYC dataset because it's rich, realistic, and multi-dimensional — 
+        geography, room type, price, availability, host behavior, and review frequency 
+        all create genuine analytical tension without needing to manufacture complexity.
+      </p>
+    </div>
+    <div class="prose">
+      <p>
+        The process involved shaping and cleaning data in Tableau Prep, then rebuilding 
+        the dashboard layout through several iterations. I paid close attention to 
+        <strong>how filters cascade across sheets</strong>, how to use color to encode 
+        meaning rather than decoration, and how to keep the top-level view scannable 
+        while preserving access to detail.
+      </p>
+      <p>
+        The goal was never a polished deliverable — it was deliberate, honest practice. 
+        Every version of this dashboard taught something the previous one didn't.
+      </p>
+    </div>
+  </div>
+
+  <!-- 02 TABLEAU EMBED -->
+  <div class="section-viz reveal">
+    <div class="viz-top">
+      <div class="rail-label">02<span>Live Dashboard</span></div>
+      <div>
+        <div class="viz-heading">Interactive Tableau Dashboard</div>
+        <div class="viz-sub">Use the filters, hover for tooltips, and explore across borough and room-type views.</div>
+      </div>
+      <a href="https://public.tableau.com/shared/J9RDFHWJ5" target="_blank" class="open-full">Open in Tableau ↗</a>
+    </div>
+
+    <div class="tableau-wrap">
+
+      <div class='tableauPlaceholder' id='viz1779038562403' style='position: relative'>
+        <noscript>
+          <a href='#'>
+            <img alt='AirBnB NYC' src='https://public.tableau.com/static/images/J9/J9RDFHWJ5/1_rss.png' style='border: none' />
+          </a>
+        </noscript>
+        <object class='tableauViz' style='display:none;'>
+          <param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' />
+          <param name='embed_code_version' value='3' />
+          <param name='path' value='shared&#47;J9RDFHWJ5' />
+          <param name='toolbar' value='yes' />
+          <param name='static_image' value='https://public.tableau.com/static/images/J9/J9RDFHWJ5/1.png' />
+          <param name='animate_transition' value='yes' />
+          <param name='display_static_image' value='yes' />
+          <param name='display_spinner' value='yes' />
+          <param name='display_overlay' value='yes' />
+          <param name='display_count' value='yes' />
+          <param name='language' value='en-US' />
+        </object>
+      </div>
+      <script type='text/javascript'>
+        var divElement = document.getElementById('viz1779038562403');
+        var vizElement = divElement.getElementsByTagName('object')[0];
+        if (divElement.offsetWidth > 800) {
+          vizElement.style.width = '100%';
+          vizElement.style.height = (divElement.offsetWidth * 0.75) + 'px';
+        } else if (divElement.offsetWidth > 500) {
+          vizElement.style.width = '100%';
+          vizElement.style.height = (divElement.offsetWidth * 0.75) + 'px';
+        } else {
+          vizElement.style.width = '100%';
+          vizElement.style.height = '1827px';
+        }
+        var scriptElement = document.createElement('script');
+        scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+        vizElement.parentNode.insertBefore(scriptElement, vizElement);
+      </script>
+
+      <div class="viz-footer">
+        <span class="viz-footer-note">Tableau Public · Interactive · Filters apply across all views</span>
+        <a href="https://public.tableau.com/shared/J9RDFHWJ5" target="_blank" class="open-full">Full screen ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 SKILLS + TOOLS -->
+  <div class="section-skills reveal">
+    <div class="rail-label">03<span>What I practiced</span></div>
+
+    <ul class="learned-list">
+      <li class="learned-item">
+        <span class="learned-num">01</span>
+        <span class="learned-text">
+          <strong>LOD Expressions</strong> — Used FIXED and INCLUDE calculations to control 
+          aggregation independently of the view level, enabling host-level metrics 
+          inside listing-level views.
+        </span>
+      </li>
+      <li class="learned-item">
+        <span class="learned-num">02</span>
+        <span class="learned-text">
+          <strong>Cross-filter interactivity</strong> — Configured dashboard actions so 
+          selecting a borough or room type propagates context across every sheet simultaneously.
+        </span>
+      </li>
+      <li class="learned-item">
+        <span class="learned-num">03</span>
+        <span class="learned-text">
+          <strong>Geographic mapping</strong> — Plotted listing density and median price 
+          per neighbourhood using Tableau's geocoding plus manual lat/long fields for precision.
+        </span>
+      </li>
+      <li class="learned-item">
+        <span class="learned-num">04</span>
+        <span class="learned-text">
+          <strong>Color as a data channel</strong> — Chose diverging vs. sequential 
+          palettes deliberately: diverging for price deviation from median, 
+          sequential for availability rate.
+        </span>
+      </li>
+      <li class="learned-item">
+        <span class="learned-num">05</span>
+        <span class="learned-text">
+          <strong>Layout composition</strong> — Rebuilt the dashboard layout twice to 
+          improve visual hierarchy, reduce eye travel, and surface KPIs above the fold.
+        </span>
+      </li>
+    </ul>
+
+    <table class="tools-table">
+      <tbody>
+        <tr>
+          <td>Viz</td>
+          <td>Tableau Desktop, Tableau Public</td>
+        </tr>
+        <tr>
+          <td>Prep</td>
+          <td>Tableau Prep Builder</td>
+        </tr>
+        <tr>
+          <td>Dataset</td>
+          <td>Inside AirBnB — NYC open listings data</td>
+        </tr>
+        <tr>
+          <td>Charts</td>
+          <td>Maps, bar, scatter, treemap, KPI tiles</td>
+        </tr>
+        <tr>
+          <td>Techniques</td>
+          <td>LOD expressions, dashboard actions, calculated fields, parameter controls</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CTA -->
+  <div class="section-cta reveal">
+    <div class="cta-text">
+      <h3>See more of my work</h3>
+      <p>Back to the portfolio for research, ML, and industry projects.</p>
+    </div>
+    <div class="btn-row">
+      <a href="https://public.tableau.com/shared/J9RDFHWJ5" target="_blank" class="btn btn-primary">View on Tableau ↗</a>
+      <a href="index.html#projects" class="btn btn-outline">All Projects</a>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- FOOTER -->
+<footer>
+  <p>Khandker Qaiduzzaman &nbsp;·&nbsp; khandkerm.com</p>
+  <p>Built with GitHub Pages · 2025</p>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.07 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
