@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Performance Prediction — Khandker Qaiduzzaman</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+  <style>
+    :root{
+      --bg:#ffffff;--bg2:#f7f9fb;--navy:#0b2545;--teal:#0e7c86;
+      --teal-light:#e6f4f5;--teal-mid:#b2dde2;--text:#1a2332;
+      --muted:#5a6a7a;--muted2:#8a9aaa;--border:#dde5ed;--border2:#c8d5e0;
+      --red:#c0392b;--red-l:#fdf0ee;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;line-height:1.7;overflow-x:hidden}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:0 5rem;height:64px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--navy);text-decoration:none}
+    .nav-logo span{color:var(--teal)}
+    .nav-right{display:flex;align-items:center;gap:2.5rem}
+    .nav-right a{font-size:.75rem;font-weight:500;color:var(--muted);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+    .nav-right a:hover{color:var(--teal)}
+    .hero-strip{margin-top:64px;display:grid;grid-template-columns:1fr 320px;border-bottom:1px solid var(--border);min-height:56vh}
+    .hero-main{padding:5rem 5rem 4.5rem;display:flex;flex-direction:column;justify-content:flex-end;border-right:1px solid var(--border)}
+    .breadcrumb{display:flex;align-items:center;gap:.5rem;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3.5rem}
+    .breadcrumb a{color:var(--teal);text-decoration:none}
+    .breadcrumb-sep{color:var(--border2)}
+    .hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--teal);letter-spacing:.14em;text-transform:uppercase;margin-bottom:1.1rem;display:flex;align-items:center;gap:.75rem}
+    .hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--teal)}
+    .hero-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,4vw,3.4rem);font-weight:300;color:var(--navy);line-height:1.1;letter-spacing:-.01em;margin-bottom:1.5rem}
+    .hero-h1 strong{font-weight:600}.hero-h1 em{color:var(--teal);font-style:italic}
+    .hero-desc{font-size:.95rem;color:var(--muted);font-weight:300;max-width:560px;line-height:1.85;margin-bottom:2.25rem}
+    .tag-row{display:flex;gap:.5rem;flex-wrap:wrap}
+    .tag{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:.25rem .65rem;border:1px solid var(--teal-mid);background:var(--teal-light);color:var(--teal)}
+    .tag-r{border-color:#276dc3;background:#edf4ff;color:#276dc3}
+    .tag-pub{border-color:#4a2c8a;background:#f3eeff;color:#4a2c8a}
+    .hero-meta{padding:5rem 2.5rem 4.5rem;background:var(--bg2);display:flex;flex-direction:column;justify-content:flex-end}
+    .meta-item{padding:1rem 0;border-top:1px solid var(--border)}
+    .meta-key{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem}
+    .meta-val{font-size:.875rem;color:var(--text)}
+    .meta-val.cuny{color:#4a2c8a}
+    .meta-links{display:flex;flex-direction:column;gap:.4rem;margin-top:.25rem}
+    .meta-link{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--teal);text-decoration:none;transition:opacity .2s}
+    .meta-link:hover{opacity:.65}
+    .page{max-width:1160px;margin:0 auto;padding:0 5rem}
+    .rail-label{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--teal);letter-spacing:.15em;text-transform:uppercase;padding-top:.3rem}
+    .rail-label span{display:block;color:var(--muted2);font-size:.58rem;margin-top:.3rem}
+    .section-about{padding:5rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:180px 1fr 1fr;gap:4.5rem;align-items:start}
+    .prose p{font-size:.925rem;color:var(--muted);font-weight:300;line-height:1.9;margin-bottom:1rem}
+    .prose p:last-child{margin-bottom:0}
+    .prose strong{color:var(--text);font-weight:500}
+
+    /* Pipeline */
+    .section-pipeline{padding:5rem 0;border-bottom:1px solid var(--border)}
+    .pipe-top{display:grid;grid-template-columns:180px 1fr;gap:4.5rem;margin-bottom:2.5rem;align-items:start}
+    .pipe-intro{font-size:.925rem;color:var(--muted);font-weight:300;line-height:1.85}
+    .pipe-steps{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border)}
+    .pipe-step{background:var(--bg);display:grid;grid-template-columns:52px 1fr}
+    .pipe-step.hi{background:var(--teal-light)}
+    .step-n{background:var(--bg2);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--teal)}
+    .pipe-step.hi .step-n{background:var(--navy);color:#fff;border-right-color:var(--navy)}
+    .step-b{padding:1rem 1.5rem}
+    .step-t{font-size:.875rem;font-weight:500;color:var(--text);margin-bottom:.2rem}
+    .step-d{font-size:.82rem;color:var(--muted);font-weight:300;line-height:1.6}
+    .step-c{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--teal);background:var(--teal-light);border:1px solid var(--teal-mid);padding:.2rem .5rem;margin-top:.4rem;display:inline-block}
+
+    /* Live dashboard */
+    .section-dashboard{padding:5rem 0;border-bottom:1px solid var(--border)}
+    .dash-top{display:grid;grid-template-columns:180px 1fr;gap:4.5rem;margin-bottom:2.5rem;align-items:start}
+    .dash-intro{font-size:.925rem;color:var(--muted);font-weight:300;line-height:1.85}
+    .dash-live-badge{display:inline-flex;align-items:center;gap:.4rem;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .75rem;border:1px solid var(--teal);color:var(--teal);background:var(--teal-light);margin-bottom:1rem}
+    .dash-live-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 1.4s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .chart-container{border:1px solid var(--border);background:var(--bg);margin-bottom:1px}
+    .chart-header{padding:.85rem 1.25rem;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+    .chart-title{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--navy);letter-spacing:.06em;text-transform:uppercase}
+    .chart-sub{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2)}
+    .chart-body{padding:0}
+    #acc-chart{width:100%;height:440px}
+    #fs-chart{width:100%;height:360px}
+    .class-toggle{display:flex;gap:1px;background:var(--border);border:1px solid var(--border)}
+    .class-toggle button{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;padding:.4rem .9rem;background:var(--bg);color:var(--muted);border:none;cursor:pointer;transition:all .15s}
+    .class-toggle button.active{background:var(--navy);color:#fff}
+    .class-toggle button:hover:not(.active){background:var(--teal-light);color:var(--teal)}
+    .dash-note{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2);line-height:1.7;margin-top:1rem}
+
+    /* Results */
+    .section-results{padding:5rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:180px 1fr;gap:4.5rem;align-items:start}
+    .res-inner{display:flex;flex-direction:column;gap:2.5rem}
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border)}
+    .stat-card{background:var(--bg);padding:1.5rem}
+    .stat-key{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+    .stat-val{font-family:'Inter',sans-serif;font-size:1.75rem;font-weight:600;color:var(--teal);line-height:1;margin-bottom:.25rem}
+    .stat-val span{font-size:1.1rem}
+    .stat-label{font-size:.8rem;color:var(--muted);font-weight:300}
+    .findings-list{list-style:none;display:flex;flex-direction:column;gap:1px}
+    .finding-item{background:var(--bg2);border:1px solid var(--border);padding:1rem 1.25rem;display:flex;gap:.9rem;align-items:flex-start}
+    .finding-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--teal);flex-shrink:0;margin-top:.22rem}
+    .finding-text{font-size:.875rem;color:var(--muted);font-weight:300;line-height:1.6}
+    .finding-text strong{color:var(--text);font-weight:500}
+
+    /* Skills */
+    .section-skills{padding:5rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:180px 1fr 1fr;gap:4.5rem;align-items:start}
+    .learned-list{list-style:none;display:flex;flex-direction:column;gap:1px}
+    .learned-item{background:var(--bg2);border:1px solid var(--border);padding:1rem 1.25rem;display:flex;gap:.9rem;align-items:flex-start}
+    .learned-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--teal);flex-shrink:0;margin-top:.22rem}
+    .learned-text{font-size:.875rem;color:var(--muted);font-weight:300;line-height:1.6}
+    .learned-text strong{color:var(--text);font-weight:500}
+    .tools-table{width:100%;border-collapse:collapse;border:1px solid var(--border)}
+    .tools-table tr{border-bottom:1px solid var(--border)}
+    .tools-table tr:last-child{border-bottom:none}
+    .tools-table td{padding:.85rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:.7rem}
+    .tools-table td:first-child{color:var(--teal);letter-spacing:.08em;text-transform:uppercase;font-size:.6rem;background:var(--bg2);border-right:1px solid var(--border);white-space:nowrap;width:120px}
+    .tools-table td:last-child{color:var(--muted)}
+
+    .section-cta{padding:3.5rem 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+    .cta-text h3{font-family:'Cormorant Garamond',serif;font-size:1.55rem;font-weight:600;color:var(--navy);margin-bottom:.25rem}
+    .cta-text p{font-size:.875rem;color:var(--muted);font-weight:300}
+    .btn-row{display:flex;gap:.75rem;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.7rem 1.5rem;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;border-radius:2px;transition:all .2s;cursor:pointer;border:none}
+    .btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--teal)}
+    .btn-rpubs{background:#4a2c8a;color:#fff}.btn-rpubs:hover{background:#361e66}
+    .btn-outline{border:1.5px solid var(--border2);color:var(--navy);background:transparent}.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+    footer{padding:1.75rem 5rem;display:flex;justify-content:space-between;align-items:center}
+    footer p{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted2)}
+    .reveal{opacity:0;transform:translateY(18px);transition:opacity .65s ease,transform .65s ease}
+    .reveal.visible{opacity:1;transform:none}
+    @media(max-width:960px){
+      nav{padding:0 1.5rem}.hero-strip{grid-template-columns:1fr}.hero-main{padding:3.5rem 1.5rem 2.5rem}
+      .hero-meta{padding:2rem 1.5rem;flex-direction:row;flex-wrap:wrap;border-top:1px solid var(--border)}.meta-item{flex:1 1 45%}
+      .page{padding:0 1.5rem}.section-about,.section-skills{grid-template-columns:1fr;gap:2rem;padding:3rem 0}
+      .section-results{grid-template-columns:1fr;gap:2rem;padding:3rem 0}
+      .pipe-top,.dash-top{grid-template-columns:1fr;gap:1.5rem}
+      .section-pipeline,.section-dashboard{padding:3rem 0}
+      .stat-grid{grid-template-columns:1fr 1fr}
+      .section-cta{flex-direction:column;gap:2rem;align-items:flex-start;padding:3rem 0}
+      footer{padding:1.5rem;flex-direction:column;gap:.5rem;text-align:center}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Khandker <span>Portfolio</span></a>
+  <div class="nav-right">
+    <a href="index.html#projects">← All Projects</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+</nav>
+
+<div class="hero-strip">
+  <div class="hero-main">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a><span class="breadcrumb-sep">/</span>
+      <a href="index.html#projects">Projects</a><span class="breadcrumb-sep">/</span>
+      <span>Student Performance Prediction</span>
+    </div>
+    <div class="hero-eyebrow">Python · Feature Selection · ANN · DT · KNN · NB · Springer InECCE2019</div>
+    <h1 class="hero-h1">
+      <strong>Student Performance Prediction</strong> —<br>
+      <em>A Comparative Analysis</em> of Four Classification Algorithms
+    </h1>
+    <p class="hero-desc">
+      A data-mining study that predicts <strong>university students' CGPA</strong> from
+      semester results and survey reviews of campus facilities. Three feature-selection
+      methods — <strong>Chi-Square</strong>, <strong>Euclidean distance</strong>, and
+      <strong>correlation</strong> — are combined into 22 shared features, then four
+      classifiers (<strong>ANN, Decision Tree, KNN, Naïve Bayes</strong>) are benchmarked
+      across 3-, 5-, and 9-class CGPA targets. The headline result: with fewer classes and
+      feature selection, the <strong>ANN reaches 93.70% accuracy</strong>, narrowly edging
+      the Decision Tree (92.18%).
+    </p>
+    <div class="tag-row">
+      <span class="tag tag-r">Python</span>
+      <span class="tag">ANN</span>
+      <span class="tag">Decision Tree</span>
+      <span class="tag">KNN</span>
+      <span class="tag">Naïve Bayes</span>
+      <span class="tag">Chi-Square</span>
+      <span class="tag">Euclidean</span>
+      <span class="tag">Correlation</span>
+      <span class="tag">EDM</span>
+      <span class="tag tag-pub">Springer · InECCE2019</span>
+    </div>
+  </div>
+  <div class="hero-meta">
+    <div class="meta-item"><div class="meta-key">Domain</div><div class="meta-val">Educational Data Mining (EDM)</div></div>
+    <div class="meta-item"><div class="meta-key">Dataset</div><div class="meta-val">Kaggle "Student Survey" — Bangladeshi university (IQAC · UGC · World Bank), 2017</div></div>
+    <div class="meta-item"><div class="meta-key">Target</div><div class="meta-val">CGPA class (3 / 5 / 9 buckets) from SGPA + facility reviews</div></div>
+    <div class="meta-item"><div class="meta-key">Methods</div><div class="meta-val">3 feature-selection methods · 4 classifiers · 3 train/test splits</div></div>
+    <div class="meta-item"><div class="meta-key">Publication</div><div class="meta-val cuny">Springer · InECCE2019 (Lecture Notes in Electrical Engineering)</div></div>
+    <div class="meta-item"><div class="meta-key">Links</div>
+      <div class="meta-links">
+        <a href="https://core.ac.uk/reader/275672030" target="_blank" class="meta-link">Full Paper ↗</a>
+        <a href="https://github.com/NafeesKhandker" target="_blank" class="meta-link">GitHub ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- 01 ABOUT -->
+  <div class="section-about reveal">
+    <div class="rail-label">01<span>About</span></div>
+    <div class="prose">
+      <p>Student academic performance shapes graduate quality, employability, and — at scale —
+        a country's economic and social development. Identifying <strong>why performance varies</strong>
+        gives institutions the information they need to plan education policy and to flag students
+        who need early support. While many studies have applied data mining to this problem, the
+        paper notes that <strong>none had focused on Bangladeshi students</strong> — the gap this
+        work sets out to fill.</p>
+      <p>The study uses a publicly available <strong>"Student Survey"</strong> dataset from Kaggle,
+        collected via Google Forms at a Bangladeshi university as part of the Institutional Quality
+        Assurance Program (initiated by the University Grants Commission and funded by the World Bank).
+        A per-student <strong>average CGPA</strong> is computed as the prediction target.</p>
+    </div>
+    <div class="prose">
+      <p>The core idea is to predict a student's <strong>CGPA from their semester results (SGPA)
+        and their review of university facilities</strong> — admission policy, laboratories,
+        internet speed, gymnasium, safety, scholarships, and more. Rather than rely on a single
+        feature ranker, the work runs <strong>three feature-selection methods</strong> and keeps
+        only the features they agree on.</p>
+      <p>Four classifiers are then compared across three CGPA granularities. A central question
+        the paper probes is how the <strong>number of prediction classes</strong> and the choice
+        of <strong>features</strong> jointly affect accuracy — and whether an ANN or a Decision
+        Tree comes out ahead depending on those choices.</p>
+    </div>
+  </div>
+
+  <!-- 02 PIPELINE -->
+  <div class="section-pipeline reveal">
+    <div class="pipe-top">
+      <div class="rail-label">02<span>Pipeline</span></div>
+      <p class="pipe-intro">
+        The workflow runs as a six-stage educational-data-mining pipeline: raw survey data is
+        cleaned and encoded, three feature-selection methods run in parallel, their results are
+        intersected into a single combined feature set, and four classifiers are trained and
+        compared across multiple CGPA class definitions and train/test splits.
+      </p>
+    </div>
+    <div class="pipe-steps">
+      <div class="pipe-step">
+        <div class="step-n">01</div>
+        <div class="step-b">
+          <div class="step-t">Raw data — Kaggle Student Survey</div>
+          <div class="step-d">Load the survey dataset collected at a Bangladeshi university (academic situation + facility-quality questionnaire). A per-student average CGPA is computed from semester records to serve as the prediction target.</div>
+          <span class="step-c">load_dataset()  # Kaggle "Student Survey", 2017</span>
+        </div>
+      </div>
+      <div class="pipe-step hi">
+        <div class="step-n">02</div>
+        <div class="step-b">
+          <div class="step-t">Null data reduction</div>
+          <div class="step-d">Survey data is incomplete, noisy, and inconsistent. Empty fields are imputed with the <code>column mean</code> rather than dropped — a simple strategy the paper notes degrades when the share of missing values grows large.</div>
+          <span class="step-c">if cell is null: cell = mean(column)</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="step-n">03</div>
+        <div class="step-b">
+          <div class="step-t">Label encoding</div>
+          <div class="step-d">Categorical word-labels are mapped to numeric form using a label encoder (pandas), since the classifiers operate on numeric features. Unique values per column are indexed and reversibly encoded.</div>
+          <span class="step-c">for col in columns: encode(unique_values(col))</span>
+        </div>
+      </div>
+      <div class="pipe-step hi">
+        <div class="step-n">04</div>
+        <div class="step-b">
+          <div class="step-t">Feature selection — three methods in parallel</div>
+          <div class="step-d"><strong>Chi-Square</strong> (significance vs. CGPA), <strong>Euclidean distance</strong> (features closest to the output), and <strong>Correlation</strong> (input–output correlation) each rank the attributes and keep their top ~39. Recurring strong features: admission policy, laboratory facilities, internet speed, sincerity &amp; commitment, and the per-semester SGPAs.</div>
+          <span class="step-c">chi_square() · euclidean() · correlation()  → top-39 each</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="step-n">05</div>
+        <div class="step-b">
+          <div class="step-t">Combine features — intersection of the three rankers</div>
+          <div class="step-d">Features appearing in the best-39 of every method are kept, yielding <code>22 combined features</code> — the eleven per-semester SGPAs plus facility factors such as admission policy/procedure, lab facilities, internet speed, gymnasium, safety, scholarships, and department service/development policy.</div>
+          <span class="step-c">combined = chi ∩ euclidean ∩ correlation  # 22 features</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="step-n">06</div>
+        <div class="step-b">
+          <div class="step-t">Classification &amp; comparison</div>
+          <div class="step-d">Four classifiers — <strong>ANN, Decision Tree, KNN, Naïve Bayes</strong> — are trained on the combined features and evaluated across <code>3 / 5 / 9</code> CGPA classes and three train/test splits (85-15, 75-25, 65-35), then compared on accuracy.</div>
+          <span class="step-c">for clf in [ANN, DT, KNN, NB]: evaluate(3,5,9 classes)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 INTERACTIVE DASHBOARD -->
+  <div class="section-dashboard reveal">
+    <div class="dash-top">
+      <div class="rail-label">03<span>Interactive Charts</span></div>
+      <div>
+        <div class="dash-live-badge">Interactive · Plotly.js</div>
+        <p class="dash-intro">
+          The two figures below reproduce the paper's accuracy comparisons with
+          <strong>Plotly.js</strong>. The first compares all four classifiers after combined
+          feature selection — toggle between <strong>3-, 5-, and 9-class</strong> CGPA targets to
+          see the crossover: ANN leads at low granularity, while the Decision Tree pulls ahead as
+          classes increase. The second shows how feature selection lifted the two leading models
+          on the 3-class task.
+        </p>
+      </div>
+    </div>
+
+    <!-- Accuracy comparison with class toggle -->
+    <div class="chart-container">
+      <div class="chart-header">
+        <span class="chart-title">Classifier Accuracy — After Combined Feature Selection</span>
+        <div class="class-toggle">
+          <button data-classes="3" class="active" onclick="setClasses(3,this)">3 Class</button>
+          <button data-classes="5" onclick="setClasses(5,this)">5 Class</button>
+          <button data-classes="9" onclick="setClasses(9,this)">9 Class</button>
+        </div>
+      </div>
+      <div class="chart-body"><div id="acc-chart"></div></div>
+    </div>
+
+    <!-- Feature selection impact -->
+    <div class="chart-container" style="margin-top:1px">
+      <div class="chart-header">
+        <span class="chart-title">Impact of Feature Selection — 3-Class Accuracy</span>
+        <span class="chart-sub">ANN &amp; Decision Tree · before vs. after combined FS</span>
+      </div>
+      <div class="chart-body"><div id="fs-chart"></div></div>
+    </div>
+
+    <p class="dash-note">
+      ⓘ Exact values reported in the paper: 3-class after-FS averages (ANN 93.70 · DT 92.18 ·
+      KNN 77.74 · NB 68.33), 9-class DT 60.35 (best), and the 3-class before→after ANN/DT figures.
+      Intermediate 5- and 9-class bars for the other classifiers are reconstructed from the
+      paper's Fig. 3–4 trends for illustration.
+    </p>
+  </div>
+
+  <!-- 04 KEY RESULTS -->
+  <div class="section-results reveal">
+    <div class="rail-label">04<span>Key Results</span></div>
+    <div class="res-inner">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-key">Best Accuracy</div>
+          <div class="stat-val">93.70<span>%</span></div>
+          <div class="stat-label">ANN · 3-class · after FS</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-key">Classifiers Compared</div>
+          <div class="stat-val">4</div>
+          <div class="stat-label">ANN · DT · KNN · NB</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-key">Combined Features</div>
+          <div class="stat-val">22</div>
+          <div class="stat-label">Intersection of 3 rankers (from ~39 each)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-key">DT @ 9 Classes</div>
+          <div class="stat-val">60.35<span>%</span></div>
+          <div class="stat-label">Best at high granularity</div>
+        </div>
+      </div>
+
+      <ul class="findings-list">
+        <li class="finding-item"><span class="finding-num">01</span>
+          <span class="finding-text">
+            <strong>ANN wins at low granularity</strong> — on the 3-class target after combined
+            feature selection, the ANN reaches <strong>93.70%</strong>, just ahead of the Decision
+            Tree at <strong>92.18%</strong>, with KNN (77.74%) and Naïve Bayes (68.33%) trailing.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">02</span>
+          <span class="finding-text">
+            <strong>Decision Tree wins at high granularity</strong> — with more classes the DT is
+            strongest, scoring <strong>60.35% at 9 classes</strong> (best of all four) and beating
+            the ANN by <strong>11.83 points at 5 classes</strong>. The two models effectively swap
+            ranks as the class count changes.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">03</span>
+          <span class="finding-text">
+            <strong>Fewer classes → higher accuracy</strong> — accuracy improves substantially as
+            the CGPA target is coarsened from 9 → 5 → 3 classes across all four classifiers,
+            making <strong>class definition a key design choice</strong> for performance prediction.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">04</span>
+          <span class="finding-text">
+            <strong>Feature selection materially lifts accuracy</strong> — combining the Chi-Square,
+            Euclidean, and correlation rankings into 22 shared features raised the 3-class ANN from
+            <strong>76.50% → 93.70%</strong>, enough to overtake the Decision Tree.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">05</span>
+          <span class="finding-text">
+            <strong>Facilities matter, not just grades</strong> — beyond per-semester SGPA, the
+            selected features highlight admission policy, laboratory facilities, internet speed,
+            sincerity &amp; commitment, safety, scholarships, and department service policy as
+            influential factors in students' CGPA.
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 05 CONTRIBUTIONS + TOOLS -->
+  <div class="section-skills reveal">
+    <div class="rail-label">05<span>Contributions</span></div>
+    <ul class="learned-list">
+      <li class="learned-item"><span class="learned-num">01</span>
+        <span class="learned-text">
+          <strong>First EDM study on Bangladeshi survey data</strong> — built a model to identify
+          the key factors behind academic-performance variation and to flag students needing
+          special attention, addressing a gap the paper notes was previously unexplored for
+          Bangladeshi students.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">02</span>
+        <span class="learned-text">
+          <strong>Three-method feature-selection ensemble</strong> — implemented Chi-Square,
+          Euclidean-distance, and correlation rankers, then intersected their top-39 results into a
+          robust <code>22-feature</code> combined set rather than trusting any single ranker.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">03</span>
+        <span class="learned-text">
+          <strong>End-to-end preprocessing pipeline</strong> — handled incomplete survey data via
+          column-mean imputation and converted categorical responses to numeric form with label
+          encoding, producing a clean matrix for all four classifiers.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">04</span>
+        <span class="learned-text">
+          <strong>Multi-granularity benchmark</strong> — evaluated ANN, Decision Tree, KNN, and
+          Naïve Bayes across <code>3 / 5 / 9</code> CGPA class definitions and three train/test
+          splits, surfacing the ANN-vs-DT crossover as granularity changes.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">05</span>
+        <span class="learned-text">
+          <strong>Actionable factor analysis</strong> — translated feature importance into concrete
+          institutional levers (admission policy, lab and internet facilities, safety, scholarships),
+          supporting data-driven education planning and early intervention.
+        </span>
+      </li>
+    </ul>
+    <table class="tools-table">
+      <tbody>
+        <tr><td>Domain</td><td>Educational Data Mining · academic performance prediction</td></tr>
+        <tr><td>Language</td><td>Python · pandas</td></tr>
+        <tr><td>Feature Sel.</td><td>Chi-Square · Euclidean distance · Correlation → 22 combined features</td></tr>
+        <tr><td>Classifiers</td><td>Artificial Neural Network · Decision Tree · K-Nearest Neighbors · Naïve Bayes</td></tr>
+        <tr><td>Preprocess</td><td>Null reduction (column-mean fill) · label encoding</td></tr>
+        <tr><td>Dataset</td><td>Kaggle "Student Survey" · Bangladeshi university (IQAC · UGC · World Bank) · 2017</td></tr>
+        <tr><td>Eval</td><td>3 / 5 / 9 CGPA classes · splits 85-15 · 75-25 · 65-35 · accuracy</td></tr>
+        <tr><td>Published</td><td>Springer · InECCE2019 · Lecture Notes in Electrical Engineering</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CTA -->
+  <div class="section-cta reveal">
+    <div class="cta-text">
+      <h3>Read the full paper</h3>
+      <p>Open-access copy on CORE · author profile and code on GitHub.</p>
+    </div>
+    <div class="btn-row">
+      <a href="https://core.ac.uk/reader/275672030" target="_blank" class="btn btn-primary">Full Paper ↗</a>
+      <a href="https://github.com/NafeesKhandker" target="_blank" class="btn btn-rpubs">GitHub ↗</a>
+      <a href="index.html#projects" class="btn btn-outline">All Projects</a>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<footer>
+  <p>Khandker Qaiduzzaman &nbsp;·&nbsp; khandkerm.com</p>
+  <p>Built with GitHub Pages · 2025</p>
+</footer>
+
+<script>
+// ── Scroll reveal ─────────────────────────────────────────────
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)} });
+}, {threshold:.07});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ══════════════════════════════════════════════════════════════
+// ACCURACY DATA — after combined feature selection (%)
+// Documented in paper: 3-class (ANN 93.70, DT 92.18, KNN 77.74, NB 68.33);
+// 9-class DT 60.35 (best). 5/9-class values for the other models are
+// reconstructed from the paper's Fig. 3–4 trends for illustration.
+// ══════════════════════════════════════════════════════════════
+const MODELS = ['ANN','Decision Tree','KNN','Naïve Bayes'];
+const COLORS = ['#0e7c86','#0b2545','#4a2c8a','#c0392b'];
+const ACC = {
+  3: [93.70, 92.18, 77.74, 68.33],   // reported
+  5: [70.17, 82.00, 56.00, 58.00],   // DT−ANN = 11.83 per paper; others reconstructed
+  9: [48.00, 60.35, 32.00, 41.00]    // DT 60.35 reported (best); others reconstructed
+};
+const SUBNOTE = {
+  3: 'Reported in paper · combined feature selection',
+  5: 'DT leads ANN by 11.83 pts (reported) · others reconstructed',
+  9: 'DT 60.35% best (reported) · others reconstructed'
+};
+
+function accTrace(nClasses){
+  return [{
+    type:'bar',
+    x:MODELS,
+    y:ACC[nClasses],
+    text:ACC[nClasses].map(v=>v.toFixed(2)+'%'),
+    textposition:'outside',
+    textfont:{family:'JetBrains Mono, monospace',size:11,color:'#1a2332'},
+    marker:{color:COLORS, line:{color:'#ffffff',width:1}},
+    hovertemplate:'<b>%{x}</b><br>Accuracy: %{y:.2f}%<extra></extra>'
+  }];
+}
+const accLayout = {
+  yaxis:{title:{text:'Accuracy (%)',font:{size:11}},range:[0,100],
+         showgrid:true,gridcolor:'#dde5ed',linecolor:'#dde5ed',ticksuffix:'%'},
+  xaxis:{linecolor:'#dde5ed',tickfont:{size:12}},
+  margin:{t:30,b:45,l:60,r:20},
+  paper_bgcolor:'white',plot_bgcolor:'white',showlegend:false,
+  annotations:[]
+};
+
+function setClasses(n, btn){
+  if(btn){document.querySelectorAll('.class-toggle button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  const layout = JSON.parse(JSON.stringify(accLayout));
+  layout.annotations = [{
+    x:1,xref:'paper',xanchor:'right',y:1.04,yref:'paper',yanchor:'bottom',
+    showarrow:false,text:SUBNOTE[n],
+    font:{family:'JetBrains Mono, monospace',size:9.5,color:'#8a9aaa'}
+  }];
+  Plotly.react('acc-chart', accTrace(n), layout,
+    {responsive:true,displayModeBar:true,modeBarButtonsToRemove:['toImage','sendDataToCloud'],displaylogo:false});
+}
+setClasses(3,null);
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE-SELECTION IMPACT — 3-class accuracy, before vs after (reported)
+// ANN 76.50 → 93.70 · DT 90.91 → 92.18
+// ══════════════════════════════════════════════════════════════
+Plotly.newPlot('fs-chart', [
+  {
+    type:'bar',name:'Before FS',x:['ANN','Decision Tree'],y:[76.50,90.91],
+    text:['76.50%','90.91%'],textposition:'outside',
+    textfont:{family:'JetBrains Mono, monospace',size:11,color:'#5a6a7a'},
+    marker:{color:'#b2dde2',line:{color:'#ffffff',width:1}},
+    hovertemplate:'<b>%{x}</b> · Before FS<br>%{y:.2f}%<extra></extra>'
+  },
+  {
+    type:'bar',name:'After FS',x:['ANN','Decision Tree'],y:[93.70,92.18],
+    text:['93.70%','92.18%'],textposition:'outside',
+    textfont:{family:'JetBrains Mono, monospace',size:11,color:'#0b2545'},
+    marker:{color:'#0e7c86',line:{color:'#ffffff',width:1}},
+    hovertemplate:'<b>%{x}</b> · After FS<br>%{y:.2f}%<extra></extra>'
+  }
+], {
+  barmode:'group',
+  yaxis:{title:{text:'Accuracy (%)',font:{size:11}},range:[0,100],
+         showgrid:true,gridcolor:'#dde5ed',linecolor:'#dde5ed',ticksuffix:'%'},
+  xaxis:{linecolor:'#dde5ed',tickfont:{size:12}},
+  margin:{t:20,b:40,l:60,r:20},
+  paper_bgcolor:'white',plot_bgcolor:'white',
+  legend:{orientation:'h',x:0.5,xanchor:'center',y:1.12,font:{size:11}}
+}, {responsive:true,displayModeBar:true,modeBarButtonsToRemove:['toImage','sendDataToCloud'],displaylogo:false});
+</script>
+</body>
+</html>
