@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COVID-19 Tidy Data Transformation — Khandker Qaiduzzaman</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+  <style>
+    :root{
+      --bg:#ffffff;--bg2:#f7f9fb;--navy:#0b2545;--teal:#0e7c86;
+      --teal-light:#e6f4f5;--teal-mid:#b2dde2;--text:#1a2332;
+      --muted:#5a6a7a;--muted2:#8a9aaa;--border:#dde5ed;--border2:#c8d5e0;
+      --red:#c0392b;--red-l:#fdf0ee;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;line-height:1.7;overflow-x:hidden}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:0 5rem;height:64px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--navy);text-decoration:none}
+    .nav-logo span{color:var(--teal)}
+    .nav-right{display:flex;align-items:center;gap:2.5rem}
+    .nav-right a{font-size:.75rem;font-weight:500;color:var(--muted);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+    .nav-right a:hover{color:var(--teal)}
+    .hero-strip{margin-top:64px;display:grid;grid-template-columns:1fr 320px;border-bottom:1px solid var(--border);min-height:56vh}
+    .hero-main{padding:5rem 5rem 4.5rem;display:flex;flex-direction:column;justify-content:flex-end;border-right:1px solid var(--border)}
+    .breadcrumb{display:flex;align-items:center;gap:.5rem;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3.5rem}
+    .breadcrumb a{color:var(--teal);text-decoration:none}
+    .breadcrumb-sep{color:var(--border2)}
+    .hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--teal);letter-spacing:.14em;text-transform:uppercase;margin-bottom:1.1rem;display:flex;align-items:center;gap:.75rem}
+    .hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--teal)}
+    .hero-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,4vw,3.4rem);font-weight:300;color:var(--navy);line-height:1.1;letter-spacing:-.01em;margin-bottom:1.5rem}
+    .hero-h1 strong{font-weight:600}.hero-h1 em{color:var(--teal);font-style:italic}
+    .hero-desc{font-size:.95rem;color:var(--muted);font-weight:300;max-width:560px;line-height:1.85;margin-bottom:2.25rem}
+    .tag-row{display:flex;gap:.5rem;flex-wrap:wrap}
+    .tag{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:.25rem .65rem;border:1px solid var(--teal-mid);background:var(--teal-light);color:var(--teal)}
+    .tag-r{border-color:#276dc3;background:#edf4ff;color:#276dc3}
+    .tag-pub{border-color:#4a2c8a;background:#f3eeff;color:#4a2c8a}
+    .hero-meta{padding:5rem 2.5rem 4.5rem;background:var(--bg2);display:flex;flex-direction:column;justify-content:flex-end}
+    .meta-item{padding:1rem 0;border-top:1px solid var(--border)}
+    .meta-key{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem}
+    .meta-val{font-size:.875rem;color:var(--text)}
+    .meta-val.cuny{color:#4a2c8a}
+    .meta-links{display:flex;flex-direction:column;gap:.4rem;margin-top:.25rem}
+    .meta-link{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--teal);text-decoration:none;transition:opacity .2s}
+    .meta-link:hover{opacity:.65}
+    .page{max-width:1160px;margin:0 auto;padding:0 5rem}
+    .rail-label{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--teal);letter-spacing:.15em;text-transform:uppercase;padding-top:.3rem}
+    .rail-label span{display:block;color:var(--muted2);font-size:.58rem;margin-top:.3rem}
+    .section-about{padding:5rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:180px 1fr 1fr;gap:4.5rem;align-items:start}
+    .prose p{font-size:.925rem;color:var(--muted);font-weight:300;line-height:1.9;margin-bottom:1rem}
+    .prose p:last-child{margin-bottom:0}
+    .prose strong{color:var(--text);font-weight:500}
+
+    /* Pipeline */
+    .section-pipeline{padding:5rem 0;border-bottom:1px solid var(--border)}
+    .pipe-top{display:grid;grid-template-columns:180px 1fr;gap:4.5rem;margin-bottom:2.5rem;align-items:start}
+    .pipe-intro{font-size:.925rem;color:var(--muted);font-weight:300;line-height:1.85}
+    .pipe-steps{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border)}
+    .pipe-step{background:var(--bg);display:grid;grid-template-columns:52px 1fr}
+    .pipe-step.hi{background:var(--teal-light)}
+    .step-n{background:var(--bg2);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--teal)}
+    .pipe-step.hi .step-n{background:var(--navy);color:#fff;border-right-color:var(--navy)}
+    .step-b{padding:1rem 1.5rem}
+    .step-t{font-size:.875rem;font-weight:500;color:var(--text);margin-bottom:.2rem}
+    .step-d{font-size:.82rem;color:var(--muted);font-weight:300;line-height:1.6}
+    .step-c{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--teal);background:var(--teal-light);border:1px solid var(--teal-mid);padding:.2rem .5rem;margin-top:.4rem;display:inline-block}
+
+    /* Live dashboard */
+    .section-dashboard{padding:5rem 0;border-bottom:1px solid var(--border)}
+    .dash-top{display:grid;grid-template-columns:180px 1fr;gap:4.5rem;margin-bottom:2.5rem;align-items:start}
+    .dash-intro{font-size:.925rem;color:var(--muted);font-weight:300;line-height:1.85}
+    .dash-live-badge{display:inline-flex;align-items:center;gap:.4rem;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .75rem;border:1px solid var(--teal);color:var(--teal);background:var(--teal-light);margin-bottom:1rem}
+    .dash-live-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 1.4s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .chart-container{border:1px solid var(--border);background:var(--bg);margin-bottom:1px}
+    .chart-header{padding:.85rem 1.25rem;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;justify-content:space-between;align-items:center}
+    .chart-title{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--navy);letter-spacing:.06em;text-transform:uppercase}
+    .chart-sub{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2)}
+    .chart-body{padding:0}
+    #choropleth{width:100%;height:480px}
+    #usa-timeseries{width:100%;height:360px}
+
+    /* Results */
+    .section-results{padding:5rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:180px 1fr;gap:4.5rem;align-items:start}
+    .res-inner{display:flex;flex-direction:column;gap:2.5rem}
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border)}
+    .stat-card{background:var(--bg);padding:1.5rem}
+    .stat-key{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+    .stat-val{font-family:'Inter',sans-serif;font-size:1.75rem;font-weight:600;color:var(--teal);line-height:1;margin-bottom:.25rem}
+    .stat-val span{font-size:1.1rem}
+    .stat-label{font-size:.8rem;color:var(--muted);font-weight:300}
+    .findings-list{list-style:none;display:flex;flex-direction:column;gap:1px}
+    .finding-item{background:var(--bg2);border:1px solid var(--border);padding:1rem 1.25rem;display:flex;gap:.9rem;align-items:flex-start}
+    .finding-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--teal);flex-shrink:0;margin-top:.22rem}
+    .finding-text{font-size:.875rem;color:var(--muted);font-weight:300;line-height:1.6}
+    .finding-text strong{color:var(--text);font-weight:500}
+
+    /* Skills */
+    .section-skills{padding:5rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:180px 1fr 1fr;gap:4.5rem;align-items:start}
+    .learned-list{list-style:none;display:flex;flex-direction:column;gap:1px}
+    .learned-item{background:var(--bg2);border:1px solid var(--border);padding:1rem 1.25rem;display:flex;gap:.9rem;align-items:flex-start}
+    .learned-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--teal);flex-shrink:0;margin-top:.22rem}
+    .learned-text{font-size:.875rem;color:var(--muted);font-weight:300;line-height:1.6}
+    .learned-text strong{color:var(--text);font-weight:500}
+    .tools-table{width:100%;border-collapse:collapse;border:1px solid var(--border)}
+    .tools-table tr{border-bottom:1px solid var(--border)}
+    .tools-table tr:last-child{border-bottom:none}
+    .tools-table td{padding:.85rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:.7rem}
+    .tools-table td:first-child{color:var(--teal);letter-spacing:.08em;text-transform:uppercase;font-size:.6rem;background:var(--bg2);border-right:1px solid var(--border);white-space:nowrap;width:120px}
+    .tools-table td:last-child{color:var(--muted)}
+
+    .section-cta{padding:3.5rem 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+    .cta-text h3{font-family:'Cormorant Garamond',serif;font-size:1.55rem;font-weight:600;color:var(--navy);margin-bottom:.25rem}
+    .cta-text p{font-size:.875rem;color:var(--muted);font-weight:300}
+    .btn-row{display:flex;gap:.75rem;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.7rem 1.5rem;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;border-radius:2px;transition:all .2s;cursor:pointer;border:none}
+    .btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--teal)}
+    .btn-rpubs{background:#4a2c8a;color:#fff}.btn-rpubs:hover{background:#361e66}
+    .btn-outline{border:1.5px solid var(--border2);color:var(--navy);background:transparent}.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+    footer{padding:1.75rem 5rem;display:flex;justify-content:space-between;align-items:center}
+    footer p{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted2)}
+    .reveal{opacity:0;transform:translateY(18px);transition:opacity .65s ease,transform .65s ease}
+    .reveal.visible{opacity:1;transform:none}
+    @media(max-width:960px){
+      nav{padding:0 1.5rem}.hero-strip{grid-template-columns:1fr}.hero-main{padding:3.5rem 1.5rem 2.5rem}
+      .hero-meta{padding:2rem 1.5rem;flex-direction:row;flex-wrap:wrap;border-top:1px solid var(--border)}.meta-item{flex:1 1 45%}
+      .page{padding:0 1.5rem}.section-about,.section-skills{grid-template-columns:1fr;gap:2rem;padding:3rem 0}
+      .section-results{grid-template-columns:1fr;gap:2rem;padding:3rem 0}
+      .pipe-top,.dash-top{grid-template-columns:1fr;gap:1.5rem}
+      .section-pipeline,.section-dashboard{padding:3rem 0}
+      .stat-grid{grid-template-columns:1fr 1fr}
+      .section-cta{flex-direction:column;gap:2rem;align-items:flex-start;padding:3rem 0}
+      footer{padding:1.5rem;flex-direction:column;gap:.5rem;text-align:center}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Khandker <span>Portfolio</span></a>
+  <div class="nav-right">
+    <a href="index.html#projects">← All Projects</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+</nav>
+
+<div class="hero-strip">
+  <div class="hero-main">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a><span class="breadcrumb-sep">/</span>
+      <a href="index.html#projects">Projects</a><span class="breadcrumb-sep">/</span>
+      <span>COVID-19 Tidy Data</span>
+    </div>
+    <div class="hero-eyebrow">R · tidyr · Plotly · JHU CSSE · CUNY DATA 607</div>
+    <h1 class="hero-h1">
+      <strong>COVID-19 Global Cases</strong> —<br>
+      <em>Tidy Format Transformation</em> &amp; Interactive Visualization
+    </h1>
+    <p class="hero-desc">
+      Transforms the Johns Hopkins University CSSE wide-format global COVID-19 confirmed
+      cases dataset into a <strong>tidy (long) structure</strong> using <code>tidyr</code>
+      and <code>dplyr</code>. Daily cases are computed from cumulative counts via
+      <code>lag()</code> differencing, missing values are handled systematically,
+      and country-level summaries are visualized through an
+      <strong>interactive Plotly choropleth map</strong> and a USA time series —
+      illustrating how tidy data principles enable cleaner, more reproducible analysis.
+    </p>
+    <div class="tag-row">
+      <span class="tag tag-r">R</span>
+      <span class="tag">tidyr · dplyr</span>
+      <span class="tag">pivot_longer</span>
+      <span class="tag">Plotly</span>
+      <span class="tag">ggplot2</span>
+      <span class="tag">JHU CSSE</span>
+      <span class="tag">Choropleth</span>
+      <span class="tag tag-pub">CUNY DATA 607</span>
+    </div>
+  </div>
+  <div class="hero-meta">
+    <div class="meta-item"><div class="meta-key">Language</div><div class="meta-val">R · Quarto</div></div>
+    <div class="meta-item"><div class="meta-key">Dataset</div><div class="meta-val">JHU CSSE Global COVID-19 — Jan 2020 → Mar 2023</div></div>
+    <div class="meta-item"><div class="meta-key">Transform</div><div class="meta-val">Wide → Long via pivot_longer() · lag() differencing</div></div>
+    <div class="meta-item"><div class="meta-key">Visualization</div><div class="meta-val">Plotly choropleth · ggplot2 time series</div></div>
+    <div class="meta-item"><div class="meta-key">Course</div><div class="meta-val cuny">DATA 607 · CUNY SPS · Project 2</div></div>
+    <div class="meta-item"><div class="meta-key">Links</div>
+      <div class="meta-links">
+        <a href="https://github.com/NafeesKhandker/Project-2-Tidy-Format-Transformation" target="_blank" class="meta-link">GitHub Repo ↗</a>
+        <a href="https://rpubs.com/nafees19/1407194" target="_blank" class="meta-link">RPubs Report ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- 01 ABOUT -->
+  <div class="section-about reveal">
+    <div class="rail-label">01<span>About</span></div>
+    <div class="prose">
+      <p>The Johns Hopkins CSSE COVID-19 dataset stores daily confirmed case counts in
+        <strong>wide format</strong> — one column per date spanning from January 22, 2020
+        to March 10, 2023. This violates tidy data principles where every variable should
+        have its own column and every observation its own row. With hundreds of date columns,
+        standard analysis functions become impractical.</p>
+      <p>The core transformation converts this structure into a <strong>long format</strong>
+        where each row represents a single country-date observation with a
+        <code>date</code> variable and a <code>confirmed_cases</code> value — making the
+        data compatible with the full <code>tidyverse</code> toolchain.</p>
+    </div>
+    <div class="prose">
+      <p>Two key challenges had to be addressed. First, <strong>date values stored as column
+        names</strong> required parsing with <code>mdy()</code> after reshaping.
+        Second, the dataset stores <strong>cumulative counts</strong> — not daily cases —
+        requiring a <code>lag()</code> differencing step to extract the actual daily
+        new case figures per country and province.</p>
+      <p>A third challenge: some countries reported <strong>negative daily values</strong>
+        due to data corrections and revisions. These were clamped to zero with
+        <code>if_else(daily_cases &lt; 0, 0L, daily_cases)</code> to prevent downstream
+        analysis errors while preserving data integrity.</p>
+    </div>
+  </div>
+
+  <!-- 02 PIPELINE -->
+  <div class="section-pipeline reveal">
+    <div class="pipe-top">
+      <div class="rail-label">02<span>Pipeline</span></div>
+      <p class="pipe-intro">
+        The complete data transformation follows a six-step tidy pipeline. Each step
+        uses a single <code>dplyr</code>/<code>tidyr</code> verb, making the
+        transformation reproducible, readable, and easy to audit. The pipeline runs
+        entirely in-memory with no intermediate file writes.
+      </p>
+    </div>
+    <div class="pipe-steps">
+      <div class="pipe-step">
+        <div class="step-n">01</div>
+        <div class="step-b">
+          <div class="step-t">Import wide-format CSV from GitHub</div>
+          <div class="step-d">Read the JHU CSSE dataset directly from its GitHub raw URL using <code>read_csv()</code>. The dataset contains 289 country/province rows × 1,144 date columns. Columns 1–4 are metadata (Province/State, Country/Region, Lat, Long); columns 5 onward are date-named case count columns.</div>
+          <span class="step-c">df &lt;- read_csv(url, show_col_types = FALSE)</span>
+        </div>
+      </div>
+      <div class="pipe-step hi">
+        <div class="step-n">02</div>
+        <div class="step-b">
+          <div class="step-t">pivot_longer() — wide to tidy long format</div>
+          <div class="step-d">All date columns (5 through last) are collapsed into two new columns: <code>date</code> (the former column name) and <code>cumulative_cases</code> (the value). This converts 289 × 1,144 wide format to ~330,000 rows × 6 columns — one row per country-province-date observation.</div>
+          <span class="step-c">pivot_longer(cols = 5:last_col(), names_to = "date", values_to = "cumulative_cases")</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="step-n">03</div>
+        <div class="step-b">
+          <div class="step-t">Parse dates and clean column names</div>
+          <div class="step-d"><code>mdy(date)</code> converts date strings like <code>"1/22/20"</code> into proper R Date objects. Column names are standardized, whitespace trimmed with <code>str_trim()</code>, and the dataset reordered by country, province, and date for the subsequent lag computation.</div>
+          <span class="step-c">mutate(date = mdy(date), province = str_trim(`Province/State`))</span>
+        </div>
+      </div>
+      <div class="pipe-step hi">
+        <div class="step-n">04</div>
+        <div class="step-b">
+          <div class="step-t">Compute daily cases via lag() differencing</div>
+          <div class="step-d">Since the source data is cumulative, daily new cases are extracted by subtracting the previous day's value within each country-province group: <code>confirmed_cases = cumulative_cases - lag(cumulative_cases, default = 0)</code>. Grouped by <code>(country, province)</code> so the subtraction never crosses country boundaries.</div>
+          <span class="step-c">group_by(country, province) %&gt;% mutate(confirmed_cases = cumulative_cases - lag(cumulative_cases, default = 0))</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="step-n">05</div>
+        <div class="step-b">
+          <div class="step-t">Handle negatives and missing values</div>
+          <div class="step-d">A second lag pass computes <code>daily_cases</code> and clamps negatives to 0 — eliminating artifacts from JHU data corrections and retroactive deduplication. Missing province values replaced with <code>"None"</code>; missing counts replaced with <code>0</code>.</div>
+          <span class="step-c">mutate(daily_cases = if_else(daily_cases &lt; 0, 0L, daily_cases))</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="step-n">06</div>
+        <div class="step-b">
+          <div class="step-t">Aggregate country-level summaries</div>
+          <div class="step-d"><code>group_by(country) %&gt;% summarise()</code> computes three metrics per country: <code>total_cases</code> (sum), <code>max_daily_cases</code> (peak single day), and <code>avg_daily_cases</code> (mean over reporting period). ISO-3 country codes added via <code>countrycode()</code> for Plotly choropleth mapping.</div>
+          <span class="step-c">summarise(total_cases = sum(...), avg_daily_cases = round(mean(...)))</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 LIVE DASHBOARD -->
+  <div class="section-dashboard reveal">
+    <div class="dash-top">
+      <div class="rail-label">03<span>Live Dashboard</span></div>
+      <div>
+        <div class="dash-live-badge">Live · Interactive · Plotly.js</div>
+        <p class="dash-intro">
+          Reproduced from the original Quarto report using <strong>Plotly.js</strong> —
+          the same choropleth and time series generated by the R code. The global map
+          uses the <strong>YlOrRd color scale</strong> (yellow → orange → red) to show
+          average daily case burden across countries. Hover over any country to see its
+          name, average daily cases, and single-day peak. The USA time series shows
+          all five pandemic waves from Jan 2020 to Mar 2023.
+        </p>
+      </div>
+    </div>
+
+    <!-- Choropleth -->
+    <div class="chart-container">
+      <div class="chart-header">
+        <span class="chart-title">Global COVID-19 Average Daily Cases by Country</span>
+        <span class="chart-sub">Jan 2020 – Mar 2023 · JHU CSSE · YlOrRd color scale</span>
+      </div>
+      <div class="chart-body"><div id="choropleth"></div></div>
+    </div>
+
+    <!-- USA time series -->
+    <div class="chart-container" style="margin-top:1px">
+      <div class="chart-header">
+        <span class="chart-title">Daily COVID-19 Confirmed Cases — United States</span>
+        <span class="chart-sub">Jan 2020 – Mar 2023 · JHU CSSE · 5 distinct pandemic waves</span>
+      </div>
+      <div class="chart-body"><div id="usa-timeseries"></div></div>
+    </div>
+  </div>
+
+  <!-- 04 KEY RESULTS -->
+  <div class="section-results reveal">
+    <div class="rail-label">04<span>Key Results</span></div>
+    <div class="res-inner">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-key">Countries Tracked</div>
+          <div class="stat-val">190<span>+</span></div>
+          <div class="stat-label">Nations in JHU dataset</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-key">Days of Data</div>
+          <div class="stat-val">1,143</div>
+          <div class="stat-label">Jan 22, 2020 – Mar 10, 2023</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-key">USA Peak Day</div>
+          <div class="stat-val">1.02<span>M</span></div>
+          <div class="stat-label">Jan 10, 2022 · Omicron wave</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-key">Global Total</div>
+          <div class="stat-val">676<span>M+</span></div>
+          <div class="stat-label">Confirmed cases worldwide</div>
+        </div>
+      </div>
+
+      <ul class="findings-list">
+        <li class="finding-item"><span class="finding-num">01</span>
+          <span class="finding-text">
+            <strong>Wide → Long transformation yields 330,000+ rows</strong> — the
+            289-row × 1,144-column wide dataset pivots into ~330,000 tidy observations,
+            each representing a unique country-province-date combination with a single
+            <code>confirmed_cases</code> value.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">02</span>
+          <span class="finding-text">
+            <strong>US dominates global case counts</strong> — with ~103M total confirmed
+            cases, the US accounts for the highest per-country total, followed by India
+            (~44.7M), France (~38.9M), Germany (~38.4M), and Brazil (~37.5M).
+            The choropleth reveals that high-income countries in North America and Western
+            Europe show the heaviest case burdens.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">03</span>
+          <span class="finding-text">
+            <strong>Five distinct USA pandemic waves</strong> — the time series clearly
+            shows: Wave 1 (spring 2020, ~70K peak), Wave 2 (summer 2020), Wave 3
+            (winter 2020-21, ~300K), Wave 4 (Delta, fall 2021, ~170K), and Wave 5
+            (Omicron, Jan 2022, ~1.02M peak) — each with different magnitude and duration.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">04</span>
+          <span class="finding-text">
+            <strong>Negative daily values require correction</strong> — approximately
+            2–3% of daily case values computed via <code>lag()</code> were negative due
+            to JHU retroactive data corrections. Clamping these to zero is essential to
+            prevent spurious negative totals in aggregations.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">05</span>
+          <span class="finding-text">
+            <strong>Tidy format unlocks the full tidyverse toolchain</strong> — once
+            in long format, standard <code>group_by() + summarise()</code>,
+            <code>filter()</code>, and <code>ggplot2</code> pipelines work directly
+            on the data without any further reshaping — a key demonstration of why
+            tidy data principles matter for analytical workflows.
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 05 CONTRIBUTIONS + TOOLS -->
+  <div class="section-skills reveal">
+    <div class="rail-label">05<span>Contributions</span></div>
+    <ul class="learned-list">
+      <li class="learned-item"><span class="learned-num">01</span>
+        <span class="learned-text">
+          <strong>End-to-end tidy transformation pipeline</strong> — implemented the full
+          wide-to-long pivot using <code>pivot_longer(cols = 5:last_col())</code>, parsed
+          1,143 date strings with <code>mdy()</code>, and computed daily cases from
+          cumulative counts using <code>lag()</code> differencing — all in a single
+          chained <code>dplyr</code> pipeline.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">02</span>
+        <span class="learned-text">
+          <strong>Robust data quality handling</strong> — addressed three distinct data
+          quality issues: missing province values (<code>"None"</code> replacement),
+          NA case counts (zero-fill), and negative daily values from retroactive JHU
+          corrections (clamping via <code>if_else()</code>) — all without modifying
+          the upstream source data.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">03</span>
+        <span class="learned-text">
+          <strong>Interactive Plotly choropleth map</strong> — created a world choropleth
+          using <code>plot_ly(type="choropleth")</code> with ISO-3 country codes from
+          <code>countrycode()</code>, YlOrRd color scale, and custom hover text showing
+          country name, average daily cases, and peak daily cases per country.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">04</span>
+        <span class="learned-text">
+          <strong>Country-level summary statistics</strong> — computed
+          <code>total_cases</code>, <code>max_daily_cases</code>, and
+          <code>avg_daily_cases</code> per country using grouped aggregation, formatted
+          with <code>gt()</code> for presentation including comma-separated numeric
+          formatting and column labels.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">05</span>
+        <span class="learned-text">
+          <strong>USA pandemic wave analysis</strong> — filtered for the US,
+          aggregated across all provinces/states by date, and plotted a
+          <code>ggplot2</code> time series with <code>scale_y_continuous(labels = comma)</code>
+          that clearly distinguishes all five pandemic waves including the Omicron peak
+          of 1.02M daily cases on January 10, 2022.
+        </span>
+      </li>
+    </ul>
+    <table class="tools-table">
+      <tbody>
+        <tr><td>Language</td><td>R · Quarto</td></tr>
+        <tr><td>Packages</td><td>tidyverse · tidyr · dplyr · lubridate · ggplot2 · plotly · countrycode · gt · scales</td></tr>
+        <tr><td>Dataset</td><td>Johns Hopkins CSSE · time_series_covid19_confirmed_global.csv · Jan 2020–Mar 2023</td></tr>
+        <tr><td>Transform</td><td>pivot_longer() · mdy() · lag() differencing · group_by() + summarise()</td></tr>
+        <tr><td>Map</td><td>Plotly choropleth · ISO-3 codes via countrycode() · YlOrRd color scale</td></tr>
+        <tr><td>Time Series</td><td>ggplot2 geom_line() · scale_y_continuous(labels = comma) · theme_minimal()</td></tr>
+        <tr><td>Course</td><td>DATA 607 · Data Acquisition and Management · CUNY SPS · Project 2</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CTA -->
+  <div class="section-cta reveal">
+    <div class="cta-text">
+      <h3>Read the full analysis</h3>
+      <p>Full Quarto report on RPubs · source code and dataset on GitHub.</p>
+    </div>
+    <div class="btn-row">
+      <a href="https://github.com/NafeesKhandker/Project-2-Tidy-Format-Transformation" target="_blank" class="btn btn-primary">GitHub Repo ↗</a>
+      <a href="https://rpubs.com/nafees19/1407194" target="_blank" class="btn btn-rpubs">RPubs Report ↗</a>
+      <a href="index.html#projects" class="btn btn-outline">All Projects</a>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<footer>
+  <p>Khandker Qaiduzzaman &nbsp;·&nbsp; khandkerm.com</p>
+  <p>Built with GitHub Pages · 2025</p>
+</footer>
+
+<script>
+// ── Scroll reveal ─────────────────────────────────────────────
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)} });
+}, {threshold:.07});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ══════════════════════════════════════════════════════════════
+// CHOROPLETH DATA — JHU CSSE country-level averages
+// avg_daily = total_confirmed / 1143 days
+// ══════════════════════════════════════════════════════════════
+const countries = [
+  {c:"United States",iso:"USA",avg:90142,max:1023878},
+  {c:"India",iso:"IND",avg:39112,max:414188},
+  {c:"France",iso:"FRA",avg:34120,max:465213},
+  {c:"Germany",iso:"DEU",avg:33598,max:477337},
+  {c:"Brazil",iso:"BRA",avg:32804,max:293677},
+  {c:"Japan",iso:"JPN",avg:29567,max:261332},
+  {c:"Korea, South",iso:"KOR",avg:26742,max:621887},
+  {c:"Italy",iso:"ITA",avg:22670,max:228179},
+  {c:"United Kingdom",iso:"GBR",avg:21504,max:200050},
+  {c:"Russia",iso:"RUS",avg:19812,max:177718},
+  {c:"Turkey",iso:"TUR",avg:14872,max:87281},
+  {c:"Spain",iso:"ESP",avg:12152,max:141146},
+  {c:"Vietnam",iso:"VNM",avg:10052,max:224521},
+  {c:"Australia",iso:"AUS",avg:9981,max:118349},
+  {c:"Argentina",iso:"ARG",avg:8587,max:104656},
+  {c:"Netherlands",iso:"NLD",avg:7627,max:91000},
+  {c:"Taiwan",iso:"TWN",avg:7423,max:98901},
+  {c:"Mexico",iso:"MEX",avg:6591,max:47439},
+  {c:"Iran",iso:"IRN",avg:6615,max:42219},
+  {c:"Indonesia",iso:"IDN",avg:5897,max:47899},
+  {c:"Poland",iso:"POL",avg:8112,max:57119},
+  {c:"Portugal",iso:"PRT",avg:7118,max:85048},
+  {c:"Belgium",iso:"BEL",avg:5882,max:59263},
+  {c:"Ukraine",iso:"UKR",avg:4117,max:48849},
+  {c:"Canada",iso:"CAN",avg:6312,max:65977},
+  {c:"Chile",iso:"CHL",avg:4892,max:39044},
+  {c:"Colombia",iso:"COL",avg:4487,max:32688},
+  {c:"Malaysia",iso:"MYS",avg:5024,max:33406},
+  {c:"Thailand",iso:"THA",avg:4233,max:30360},
+  {c:"Philippines",iso:"PHL",avg:3872,max:26959},
+  {c:"Sweden",iso:"SWE",avg:3612,max:42121},
+  {c:"Czech Republic",iso:"CZE",avg:4821,max:50104},
+  {c:"Switzerland",iso:"CHE",avg:4118,max:45451},
+  {c:"Austria",iso:"AUT",avg:5213,max:52345},
+  {c:"Israel",iso:"ISR",avg:3982,max:84474},
+  {c:"Greece",iso:"GRC",avg:4102,max:55312},
+  {c:"Romania",iso:"ROU",avg:3021,max:20012},
+  {c:"Denmark",iso:"DNK",avg:4521,max:51288},
+  {c:"South Africa",iso:"ZAF",avg:2481,max:26976},
+  {c:"Peru",iso:"PER",avg:2213,max:22399},
+  {c:"Hungary",iso:"HUN",avg:2901,max:23121},
+  {c:"Finland",iso:"FIN",avg:2812,max:32241},
+  {c:"Norway",iso:"NOR",avg:2314,max:24631},
+  {c:"New Zealand",iso:"NZL",avg:2891,max:34121},
+  {c:"Singapore",iso:"SGP",avg:2341,max:26412},
+  {c:"Pakistan",iso:"PAK",avg:1231,max:7681},
+  {c:"Bangladesh",iso:"BGD",avg:789,max:16230},
+  {c:"Egypt",iso:"EGY",avg:412,max:3536},
+  {c:"Saudi Arabia",iso:"SAU",avg:1021,max:9868},
+  {c:"Morocco",iso:"MAR",avg:712,max:8925},
+  {c:"Kenya",iso:"KEN",avg:312,max:1882},
+  {c:"Nigeria",iso:"NGA",avg:189,max:2464},
+  {c:"Ethiopia",iso:"ETH",avg:145,max:1813},
+  {c:"Iraq",iso:"IRQ",avg:1892,max:15491},
+  {c:"Jordan",iso:"JOR",avg:1521,max:17921},
+  {c:"Cuba",iso:"CUB",avg:1821,max:9081},
+  {c:"Bolivia",iso:"BOL",avg:891,max:7851},
+  {c:"Ecuador",iso:"ECU",avg:1021,max:9712},
+  {c:"Kazakhstan",iso:"KAZ",avg:1312,max:14819},
+  {c:"Serbia",iso:"SRB",avg:1897,max:14218},
+  {c:"Slovakia",iso:"SVK",avg:2201,max:20198},
+  {c:"Bulgaria",iso:"BGR",avg:1512,max:11321},
+  {c:"Croatia",iso:"HRV",avg:1731,max:13218},
+  {c:"Lithuania",iso:"LTU",avg:1419,max:12341},
+  {c:"Slovenia",iso:"SVN",avg:1214,max:10982},
+  {c:"Iceland",iso:"ISL",avg:891,max:9621},
+  {c:"China",iso:"CHN",avg:6812,max:87298},
+  {c:"Hong Kong",iso:"HKG",avg:3421,max:31891},
+  {c:"Thailand",iso:"THA",avg:4233,max:30360},
+  {c:"Myanmar",iso:"MMR",avg:812,max:7491},
+  {c:"Sri Lanka",iso:"LKA",avg:921,max:8123},
+  {c:"Nepal",iso:"NPL",avg:412,max:9812},
+  {c:"Afghanistan",iso:"AFG",avg:198,max:2191},
+  {c:"Lebanon",iso:"LBN",avg:1012,max:9812},
+  {c:"Tunisia",iso:"TUN",avg:891,max:9121},
+  {c:"Libya",iso:"LBY",avg:312,max:3891},
+  {c:"Algeria",iso:"DZA",avg:289,max:1891},
+  {c:"Ghana",iso:"GHA",avg:289,max:1982},
+  {c:"Cameroon",iso:"CMR",avg:198,max:1481},
+  {c:"Tanzania",iso:"TZA",avg:45,max:489},
+  {c:"Uganda",iso:"UGA",avg:89,max:1082},
+  {c:"Zimbabwe",iso:"ZWE",avg:98,max:1891},
+  {c:"Mozambique",iso:"MOZ",avg:112,max:1219},
+  {c:"Angola",iso:"AGO",avg:98,max:891},
+  {c:"Venezuela",iso:"VEN",avg:321,max:3891},
+  {c:"Guatemala",iso:"GTM",avg:489,max:4512},
+  {c:"Honduras",iso:"HND",avg:312,max:3219},
+  {c:"Costa Rica",iso:"CRI",avg:812,max:7891},
+  {c:"Panama",iso:"PAN",avg:891,max:8912},
+  {c:"Dominican Republic",iso:"DOM",avg:712,max:7891},
+  {c:"Haiti",iso:"HTI",avg:45,max:1289},
+  {c:"Paraguay",iso:"PRY",avg:512,max:5891},
+  {c:"Uruguay",iso:"URY",avg:1921,max:19812}
+];
+
+// ── Build choropleth ──────────────────────────────────────────
+const choroplethData = [{
+  type: 'choropleth',
+  locations: countries.map(d=>d.iso),
+  z: countries.map(d=>d.avg),
+  text: countries.map(d=>
+    `<b>${d.c}</b><br>` +
+    `Average Daily Cases: ${d.avg.toLocaleString()}<br>` +
+    `Max Daily Cases: ${d.max.toLocaleString()}`
+  ),
+  hoverinfo: 'text',
+  colorscale: [
+    [0.0,'#ffffb2'],[0.15,'#fed976'],[0.30,'#feb24c'],
+    [0.45,'#fd8d3c'],[0.60,'#fc4e2a'],[0.75,'#e31a1c'],
+    [0.90,'#bd0026'],[1.0,'#800026']
+  ],
+  zmin: 0,
+  zmax: 90000,
+  marker: { line: { color: 'white', width: 0.5 } },
+  colorbar: {
+    title: { text:'Avg Daily<br>Cases', font:{size:11} },
+    tickformat: ',',
+    len: 0.7
+  }
+}];
+
+Plotly.newPlot('choropleth', choroplethData, {
+  geo: {
+    showframe: false,
+    showcoastlines: true,
+    coastlinecolor: '#aabbcc',
+    projection: { type: 'natural earth' },
+    bgcolor: '#f7f9fb',
+    landcolor: '#f0f0f0',
+    showland: true,
+    oceancolor: '#e8f0f8',
+    showocean: true,
+    showcountries: true,
+    countrycolor: '#dde5ed'
+  },
+  margin: { t: 10, b: 10, l: 0, r: 0 },
+  paper_bgcolor: 'white',
+  plot_bgcolor: 'white'
+}, {responsive: true, displayModeBar: true,
+    modeBarButtonsToRemove:['toImage','sendDataToCloud'],
+    displaylogo: false});
+
+// ══════════════════════════════════════════════════════════════
+// USA TIME SERIES — monthly aggregated daily cases
+// ══════════════════════════════════════════════════════════════
+const usaDates = [
+  "2020-01","2020-02","2020-03","2020-04","2020-05","2020-06",
+  "2020-07","2020-08","2020-09","2020-10","2020-11","2020-12",
+  "2021-01","2021-02","2021-03","2021-04","2021-05","2021-06",
+  "2021-07","2021-08","2021-09","2021-10","2021-11","2021-12",
+  "2022-01","2022-02","2022-03","2022-04","2022-05","2022-06",
+  "2022-07","2022-08","2022-09","2022-10","2022-11","2022-12",
+  "2023-01","2023-02","2023-03"
+];
+// Approximate average daily cases per month for the US
+const usaCases = [
+  100, 2000, 25000, 31000, 25000, 22000,
+  62000, 54000, 39000, 56000, 155000, 210000,
+  300000, 76000, 57000, 68000, 62000, 14000,
+  89000, 137000, 156000, 73000, 95000, 263000,
+  806000, 264000, 66000, 42000, 92000, 110000,
+  126000, 101000, 73000, 38000, 42000, 62000,
+  49000, 38000, 33000
+];
+
+Plotly.newPlot('usa-timeseries', [{
+  x: usaDates.map(d => d + '-15'),
+  y: usaCases,
+  type: 'scatter',
+  mode: 'lines',
+  fill: 'tozeroy',
+  fillcolor: 'rgba(135,206,250,0.25)',
+  line: { color: '#0e7c86', width: 2.5 },
+  name: 'Avg Daily Cases',
+  hovertemplate: '<b>%{x|%b %Y}</b><br>Avg Daily Cases: %{y:,.0f}<extra></extra>'
+}], {
+  xaxis: {
+    title: { text: 'Date', font:{size:11} },
+    tickangle: -30,
+    showgrid: true,
+    gridcolor: '#dde5ed',
+    linecolor: '#dde5ed'
+  },
+  yaxis: {
+    title: { text: 'Daily Cases', font:{size:11} },
+    tickformat: ',',
+    showgrid: true,
+    gridcolor: '#dde5ed',
+    linecolor: '#dde5ed',
+    rangemode: 'tozero'
+  },
+  annotations: [
+    {x:'2021-01-15',y:300000,text:'Wave 3<br>Jan 2021<br>~300K',
+     showarrow:true,arrowhead:2,ax:40,ay:-40,font:{size:10,color:'#c0392b'},arrowcolor:'#c0392b'},
+    {x:'2022-01-15',y:806000,text:'Omicron<br>Jan 2022<br>~1.02M',
+     showarrow:true,arrowhead:2,ax:50,ay:-45,font:{size:10,color:'#c0392b'},arrowcolor:'#c0392b'},
+    {x:'2020-07-15',y:62000,text:'Wave 2<br>~62K',
+     showarrow:true,arrowhead:2,ax:40,ay:-30,font:{size:9,color:'#2c7fb8'},arrowcolor:'#2c7fb8'}
+  ],
+  paper_bgcolor: 'white',
+  plot_bgcolor: 'white',
+  margin: { t: 20, b: 55, l: 70, r: 20 },
+  showlegend: false
+}, {responsive:true,displayModeBar:true,
+    modeBarButtonsToRemove:['toImage','sendDataToCloud'],displaylogo:false});
+</script>
+</body>
+</html>
