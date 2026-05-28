@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyStudyLife — Khandker Qaiduzzaman</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+  <style>
+    :root{
+      --bg:#ffffff;--bg2:#f7f9fb;--navy:#0b2545;--teal:#0e7c86;
+      --teal-light:#e6f4f5;--teal-mid:#b2dde2;--text:#1a2332;
+      --muted:#5a6a7a;--muted2:#8a9aaa;--border:#dde5ed;--border2:#c8d5e0;
+      --red:#c0392b;--red-l:#fdf0ee;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;line-height:1.7;overflow-x:hidden}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:0 5rem;height:64px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--navy);text-decoration:none}
+    .nav-logo span{color:var(--teal)}
+    .nav-right{display:flex;align-items:center;gap:2.5rem}
+    .nav-right a{font-size:.75rem;font-weight:500;color:var(--muted);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+    .nav-right a:hover{color:var(--teal)}
+    .hero-strip{margin-top:64px;display:grid;grid-template-columns:1fr 320px;border-bottom:1px solid var(--border);min-height:56vh}
+    .hero-main{padding:5rem 5rem 4.5rem;display:flex;flex-direction:column;justify-content:flex-end;border-right:1px solid var(--border)}
+    .breadcrumb{display:flex;align-items:center;gap:.5rem;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3.5rem}
+    .breadcrumb a{color:var(--teal);text-decoration:none}
+    .breadcrumb-sep{color:var(--border2)}
+    .hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--teal);letter-spacing:.14em;text-transform:uppercase;margin-bottom:1.1rem;display:flex;align-items:center;gap:.75rem}
+    .hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--teal)}
+    .hero-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,4vw,3.4rem);font-weight:300;color:var(--navy);line-height:1.1;letter-spacing:-.01em;margin-bottom:1.5rem}
+    .hero-h1 strong{font-weight:600}.hero-h1 em{color:var(--teal);font-style:italic}
+    .hero-desc{font-size:.95rem;color:var(--muted);font-weight:300;max-width:560px;line-height:1.85;margin-bottom:2.25rem}
+    .tag-row{display:flex;gap:.5rem;flex-wrap:wrap}
+    .tag{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:.25rem .65rem;border:1px solid var(--teal-mid);background:var(--teal-light);color:var(--teal)}
+    .tag-r{border-color:#276dc3;background:#edf4ff;color:#276dc3}
+    .tag-pub{border-color:#4a2c8a;background:#f3eeff;color:#4a2c8a}
+    .hero-meta{padding:5rem 2.5rem 4.5rem;background:var(--bg2);display:flex;flex-direction:column;justify-content:flex-end}
+    .meta-item{padding:1rem 0;border-top:1px solid var(--border)}
+    .meta-key{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem}
+    .meta-val{font-size:.875rem;color:var(--text)}
+    .meta-val.cuny{color:#4a2c8a}
+    .meta-links{display:flex;flex-direction:column;gap:.4rem;margin-top:.25rem}
+    .meta-link{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--teal);text-decoration:none;transition:opacity .2s}
+    .meta-link:hover{opacity:.65}
+    .page{max-width:1160px;margin:0 auto;padding:0 5rem}
+    .rail-label{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--teal);letter-spacing:.15em;text-transform:uppercase;padding-top:.3rem}
+    .rail-label span{display:block;color:var(--muted2);font-size:.58rem;margin-top:.3rem}
+    .section-about{padding:5rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:180px 1fr 1fr;gap:4.5rem;align-items:start}
+    .prose p{font-size:.925rem;color:var(--muted);font-weight:300;line-height:1.9;margin-bottom:1rem}
+    .prose p:last-child{margin-bottom:0}
+    .prose strong{color:var(--text);font-weight:500}
+
+    .section-pipeline{padding:5rem 0;border-bottom:1px solid var(--border)}
+    .pipe-top{display:grid;grid-template-columns:180px 1fr;gap:4.5rem;margin-bottom:2.5rem;align-items:start}
+    .pipe-intro{font-size:.925rem;color:var(--muted);font-weight:300;line-height:1.85}
+    .pipe-steps{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border)}
+    .pipe-step{background:var(--bg);display:grid;grid-template-columns:52px 1fr}
+    .pipe-step.hi{background:var(--teal-light)}
+    .step-n{background:var(--bg2);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--teal)}
+    .pipe-step.hi .step-n{background:var(--navy);color:#fff;border-right-color:var(--navy)}
+    .step-b{padding:1rem 1.5rem}
+    .step-t{font-size:.875rem;font-weight:500;color:var(--text);margin-bottom:.2rem}
+    .step-d{font-size:.82rem;color:var(--muted);font-weight:300;line-height:1.6}
+    .step-c{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--teal);background:var(--teal-light);border:1px solid var(--teal-mid);padding:.2rem .5rem;margin-top:.4rem;display:inline-block}
+
+    .section-dashboard{padding:5rem 0;border-bottom:1px solid var(--border)}
+    .dash-top{display:grid;grid-template-columns:180px 1fr;gap:4.5rem;margin-bottom:2.5rem;align-items:start}
+    .dash-intro{font-size:.925rem;color:var(--muted);font-weight:300;line-height:1.85}
+    .dash-live-badge{display:inline-flex;align-items:center;gap:.4rem;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .75rem;border:1px solid var(--teal);color:var(--teal);background:var(--teal-light);margin-bottom:1rem}
+    .dash-live-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 1.4s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .chart-container{border:1px solid var(--border);background:var(--bg);margin-bottom:1px}
+    .chart-header{padding:.85rem 1.25rem;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+    .chart-title{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--navy);letter-spacing:.06em;text-transform:uppercase}
+    .chart-sub{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2)}
+    .chart-body{padding:0}
+    #views-chart{width:100%;height:420px}
+    #modules-chart{width:100%;height:380px}
+    .dash-note{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2);line-height:1.7;margin-top:1rem}
+
+    .section-results{padding:5rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:180px 1fr;gap:4.5rem;align-items:start}
+    .res-inner{display:flex;flex-direction:column;gap:2.5rem}
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border)}
+    .stat-card{background:var(--bg);padding:1.5rem}
+    .stat-key{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+    .stat-val{font-family:'Inter',sans-serif;font-size:1.75rem;font-weight:600;color:var(--teal);line-height:1;margin-bottom:.25rem}
+    .stat-val span{font-size:1.1rem}
+    .stat-label{font-size:.8rem;color:var(--muted);font-weight:300}
+    .findings-list{list-style:none;display:flex;flex-direction:column;gap:1px}
+    .finding-item{background:var(--bg2);border:1px solid var(--border);padding:1rem 1.25rem;display:flex;gap:.9rem;align-items:flex-start}
+    .finding-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--teal);flex-shrink:0;margin-top:.22rem}
+    .finding-text{font-size:.875rem;color:var(--muted);font-weight:300;line-height:1.6}
+    .finding-text strong{color:var(--text);font-weight:500}
+
+    .section-skills{padding:5rem 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:180px 1fr 1fr;gap:4.5rem;align-items:start}
+    .learned-list{list-style:none;display:flex;flex-direction:column;gap:1px}
+    .learned-item{background:var(--bg2);border:1px solid var(--border);padding:1rem 1.25rem;display:flex;gap:.9rem;align-items:flex-start}
+    .learned-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--teal);flex-shrink:0;margin-top:.22rem}
+    .learned-text{font-size:.875rem;color:var(--muted);font-weight:300;line-height:1.6}
+    .learned-text strong{color:var(--text);font-weight:500}
+    .tools-table{width:100%;border-collapse:collapse;border:1px solid var(--border)}
+    .tools-table tr{border-bottom:1px solid var(--border)}
+    .tools-table tr:last-child{border-bottom:none}
+    .tools-table td{padding:.85rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:.7rem}
+    .tools-table td:first-child{color:var(--teal);letter-spacing:.08em;text-transform:uppercase;font-size:.6rem;background:var(--bg2);border-right:1px solid var(--border);white-space:nowrap;width:120px}
+    .tools-table td:last-child{color:var(--muted)}
+
+    .section-cta{padding:3.5rem 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+    .cta-text h3{font-family:'Cormorant Garamond',serif;font-size:1.55rem;font-weight:600;color:var(--navy);margin-bottom:.25rem}
+    .cta-text p{font-size:.875rem;color:var(--muted);font-weight:300}
+    .btn-row{display:flex;gap:.75rem;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.7rem 1.5rem;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;border-radius:2px;transition:all .2s;cursor:pointer;border:none}
+    .btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--teal)}
+    .btn-rpubs{background:#4a2c8a;color:#fff}.btn-rpubs:hover{background:#361e66}
+    .btn-outline{border:1.5px solid var(--border2);color:var(--navy);background:transparent}.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+    footer{padding:1.75rem 5rem;display:flex;justify-content:space-between;align-items:center}
+    footer p{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted2)}
+    .reveal{opacity:0;transform:translateY(18px);transition:opacity .65s ease,transform .65s ease}
+    .reveal.visible{opacity:1;transform:none}
+    @media(max-width:960px){
+      nav{padding:0 1.5rem}.hero-strip{grid-template-columns:1fr}.hero-main{padding:3.5rem 1.5rem 2.5rem}
+      .hero-meta{padding:2rem 1.5rem;flex-direction:row;flex-wrap:wrap;border-top:1px solid var(--border)}.meta-item{flex:1 1 45%}
+      .page{padding:0 1.5rem}.section-about,.section-skills{grid-template-columns:1fr;gap:2rem;padding:3rem 0}
+      .section-results{grid-template-columns:1fr;gap:2rem;padding:3rem 0}
+      .pipe-top,.dash-top{grid-template-columns:1fr;gap:1.5rem}
+      .section-pipeline,.section-dashboard{padding:3rem 0}
+      .stat-grid{grid-template-columns:1fr 1fr}
+      .section-cta{flex-direction:column;gap:2rem;align-items:flex-start;padding:3rem 0}
+      footer{padding:1.5rem;flex-direction:column;gap:.5rem;text-align:center}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Khandker <span>Portfolio</span></a>
+  <div class="nav-right">
+    <a href="index.html#projects">← All Projects</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+</nav>
+
+<div class="hero-strip">
+  <div class="hero-main">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a><span class="breadcrumb-sep">/</span>
+      <a href="index.html#projects">Projects</a><span class="breadcrumb-sep">/</span>
+      <span>MyStudyLife</span>
+    </div>
+    <div class="hero-eyebrow">C# · WPF · SQL Server · MVC · Student Planner · Academic Project</div>
+    <h1 class="hero-h1">
+      <strong>MyStudyLife</strong> —<br>
+      A <em>Students' Task Management</em> Desktop App
+    </h1>
+    <p class="hero-desc">
+      A WPF desktop student planner modeled after the <strong>My Study Life</strong> online app:
+      a colorful Material-style <strong>Dashboard</strong> of Today / Tasks / Classes / Exams
+      tiles, a six-tab sidebar (Home, Dashboard, Calendar, Tasks, Exams, Search), and a
+      <strong>three-project MVC solution</strong> (View / Model / Controller) backed by a
+      local <strong>SQL Server</strong> database. Eight XAML views cover sign-up, sign-in,
+      landing, home, and reusable user controls for the dashboard tiles and search.
+    </p>
+    <div class="tag-row">
+      <span class="tag tag-r">C#</span>
+      <span class="tag">WPF</span>
+      <span class="tag">XAML</span>
+      <span class="tag">.NET</span>
+      <span class="tag">SQL Server</span>
+      <span class="tag">MVC</span>
+      <span class="tag">Material UI</span>
+      <span class="tag">CRUD</span>
+      <span class="tag">DataGrid</span>
+      <span class="tag">Academic Project</span>
+    </div>
+  </div>
+  <div class="hero-meta">
+    <div class="meta-item"><div class="meta-key">Domain</div><div class="meta-val">Student planner · personal task management</div></div>
+    <div class="meta-item"><div class="meta-key">Platform</div><div class="meta-val">WPF · .NET · Visual Studio</div></div>
+    <div class="meta-item"><div class="meta-key">Architecture</div><div class="meta-val">3-project MVC solution · View &middot; Model &middot; Controller</div></div>
+    <div class="meta-item"><div class="meta-key">Database</div><div class="meta-val">SQL Server local (DBMyStudyLife.mdf)</div></div>
+    <div class="meta-item"><div class="meta-key">Scope</div><div class="meta-val">8 XAML views · 6-tab sidebar · 4-tile dashboard</div></div>
+    <div class="meta-item"><div class="meta-key">Links</div>
+      <div class="meta-links">
+        <a href="https://github.com/NafeesKhandker/Students--Task-Management-Software" target="_blank" class="meta-link">GitHub Repo ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- 01 ABOUT -->
+  <div class="section-about reveal">
+    <div class="rail-label">01<span>About</span></div>
+    <div class="prose">
+      <p>MyStudyLife is a Windows desktop reimagining of the popular online study planner of the
+        same name. The aim is to give students a single place to track every recurring class,
+        every assignment, and every upcoming exam — with a <strong>Material-style dashboard</strong>
+        that summarizes the day at a glance: Today, Tasks, Classes, and Exams, each as a colored
+        tile with live counts.</p>
+      <p>Behind the UI the project is organized as a <strong>three-project Visual Studio
+        solution</strong>: <code>MyStudyLife</code> (the WPF views), <code>MyStudentLifeModel</code>
+        (data classes and SQL Server access), and <code>MyStudentLifeController</code>
+        (mediator + datetime / time-formatting utilities). A local <code>DBMyStudyLife.mdf</code>
+        SQL Server database stores users, classes, tasks, and exams.</p>
+    </div>
+    <div class="prose">
+      <p>The user flow follows the real My Study Life pattern. <strong>View_StartUp</strong>
+        is the landing page — branded header with Sign In / Sign Up, hero with the tagline
+        "The Online Student Planner", and four feature blocks (Track Tasks, Manage Classes,
+        Store Exams, Get Notified). <strong>View_SignIn</strong> and <strong>View_SignUp</strong>
+        are dark-themed authentication windows; <strong>View_home</strong> is the main app
+        window with a left icon sidebar and a content area that swaps between Dashboard,
+        Calendar, Tasks, Exams, and Search.</p>
+      <p>Tasks, exams, and classes each get their own family of helper methods —
+        <em>FilterTask</em>, <em>SearchTask</em>, <em>OverDueClass</em>, <em>PastExam</em>,
+        <em>today</em>, <em>tomorrow</em>, <em>findWeekCount</em> — that the controller
+        composes to build the agenda views. The repo also preserves five iterations of the
+        Model class (<code>ModelClass.cs</code> through <code>ModelClass v5</code>), making
+        the project's design evolution easy to read.</p>
+    </div>
+  </div>
+
+  <!-- 02 ARCHITECTURE -->
+  <div class="section-pipeline reveal">
+    <div class="pipe-top">
+      <div class="rail-label">02<span>Architecture</span></div>
+      <p class="pipe-intro">
+        One Visual Studio solution, three projects, eight XAML views, and a local SQL Server
+        database. The View project owns the UI; the Model project owns the data classes and
+        SQL Server access; the Controller project owns the mediator logic plus shared
+        datetime / time-formatting utilities and entity-specific filter / search methods.
+      </p>
+    </div>
+    <div class="pipe-steps">
+      <div class="pipe-step">
+        <div class="step-n">01</div>
+        <div class="step-b">
+          <div class="step-t">Solution layout — three projects, MVC-style</div>
+          <div class="step-d"><strong>MyStudyLife</strong> (View) for WPF windows and user controls, <strong>MyStudentLifeModel</strong> for data classes plus the <code>DBMyStudyLife.mdf</code> SQL Server file, and <strong>MyStudentLifeController</strong> for the mediator + utilities. One <code>MyStudyLife.sln</code> ties them together.</div>
+          <span class="step-c">View / Model / Controller  // one .sln, three .csproj</span>
+        </div>
+      </div>
+      <div class="pipe-step hi">
+        <div class="step-n">02</div>
+        <div class="step-b">
+          <div class="step-t">Views — 8 XAML windows and user controls</div>
+          <div class="step-d"><strong>View_StartUp</strong> (landing), <strong>View_SignIn</strong> / <strong>View_SignUp</strong> (auth), <strong>View_home</strong> / <strong>View_Home1</strong> (main app), plus the <strong>UserControlDashBoard</strong> (4 Material tiles) and <strong>UserControlSearch</strong>. <code>App.xaml</code> is the entry point.</div>
+          <span class="step-c">View_StartUp · View_SignIn · View_SignUp · View_home · DashBoard · Search</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="step-n">03</div>
+        <div class="step-b">
+          <div class="step-t">Model — data classes &amp; SQL Server</div>
+          <div class="step-d">The Model project keeps the local <code>DBMyStudyLife.mdf</code> SQL Server database alongside C# classes for User, Class, Task, and Exam. The repo preserves five iterations of <code>ModelClass</code> (versions 1–5), making the design refactoring path visible.</div>
+          <span class="step-c">ModelClass.cs · ModelClass v2 / v3 / v4 / v5 · DBMyStudyLife.mdf</span>
+        </div>
+      </div>
+      <div class="pipe-step hi">
+        <div class="step-n">04</div>
+        <div class="step-b">
+          <div class="step-t">Controller — mediator + entity helpers</div>
+          <div class="step-d"><strong>ControllerClass.cs</strong> ties views to data, supported by per-entity helpers — <em>FilterTask</em>, <em>SearchTask</em>, <em>FilterExam</em>, <em>SearchExam</em>, <em>FilterClass</em>, <em>SearchClass</em>, <em>OverDueClass</em>, <em>OverDueCurrentExam</em>, <em>PastExam</em>, plus <em>today</em>, <em>tomorrow</em>, and <em>findWeekCount</em>.</div>
+          <span class="step-c">ControllerClass · datetime.cs · time_formatting.cs · 12+ entity helpers</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="step-n">05</div>
+        <div class="step-b">
+          <div class="step-t">User flow — StartUp → Auth → Home</div>
+          <div class="step-d">The app opens on <strong>View_StartUp</strong> (landing). Sign Up creates a new user; Sign In validates credentials and routes to <strong>View_home</strong>. From Home, the 6-tab icon sidebar — Home, Dashboard, Calendar, Tasks, Exams, Search — swaps the right-side content panel.</div>
+          <span class="step-c">StartUp → SignIn / SignUp → Home (6 tabs)</span>
+        </div>
+      </div>
+      <div class="pipe-step hi">
+        <div class="step-n">06</div>
+        <div class="step-b">
+          <div class="step-t">Dashboard tiles — four colors, one glance</div>
+          <div class="step-d">The <strong>UserControlDashBoard</strong> uses four colored panels — cyan <em>Today</em>, blue <em>Tasks</em>, dark-teal <em>Classes</em>, purple <em>Exams</em> — each showing live counts for the day plus a Classes list with start / end times for each enrolled subject.</div>
+          <span class="step-c">Today / Tasks / Classes / Exams · live counts per day</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 INTERACTIVE -->
+  <div class="section-dashboard reveal">
+    <div class="dash-top">
+      <div class="rail-label">03<span>Interactive Charts</span></div>
+      <div>
+        <div class="dash-live-badge">Interactive · Plotly.js</div>
+        <p class="dash-intro">
+          Two views of the codebase rendered with <strong>Plotly.js</strong>. The first shows the
+          <strong>size of each XAML view</strong> — View_home dominates because it hosts the entire
+          main app (sidebar + content panels for every tab). The second groups the repo's helper
+          methods by <strong>entity domain</strong> (Task / Exam / Class / Auth / Util / Model),
+          giving a sense of where development effort concentrated.
+        </p>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-header">
+        <span class="chart-title">XAML Views — Size in Bytes</span>
+        <span class="chart-sub">8 .xaml files in MyStudyLife/MyStudyLife/</span>
+      </div>
+      <div class="chart-body"><div id="views-chart"></div></div>
+    </div>
+
+    <div class="chart-container" style="margin-top:1px">
+      <div class="chart-header">
+        <span class="chart-title">Helper Methods — Grouped by Entity Domain</span>
+        <span class="chart-sub">filter · search · overdue · time · model iterations</span>
+      </div>
+      <div class="chart-body"><div id="modules-chart"></div></div>
+    </div>
+
+    <p class="dash-note">
+      ⓘ XAML sizes are raw byte counts from the <code>MyStudyLife/MyStudyLife/</code> directory.
+      Helper-method counts are file counts from the repo root — each filename like
+      <em>FilterTask method</em>, <em>SearchExam method</em>, <em>OverDueClass method v2</em>,
+      <em>today.cs</em> is one file. Five ModelClass iterations are included under "Model".
+    </p>
+  </div>
+
+  <!-- 04 KEY RESULTS -->
+  <div class="section-results reveal">
+    <div class="rail-label">04<span>Key Numbers</span></div>
+    <div class="res-inner">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-key">XAML Views</div>
+          <div class="stat-val">8</div>
+          <div class="stat-label">6 Windows + 2 UserControls</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-key">Solution Projects</div>
+          <div class="stat-val">3</div>
+          <div class="stat-label">View · Model · Controller</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-key">Sidebar Tabs</div>
+          <div class="stat-val">6</div>
+          <div class="stat-label">Home · Dashboard · Calendar · Tasks · Exams · Search</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-key">Entity Helpers</div>
+          <div class="stat-val">14<span>+</span></div>
+          <div class="stat-label">Filter / Search / OverDue / Time methods</div>
+        </div>
+      </div>
+
+      <ul class="findings-list">
+        <li class="finding-item"><span class="finding-num">01</span>
+          <span class="finding-text">
+            <strong>Material-style dashboard</strong> — four colored tiles (cyan Today, blue
+            Tasks, dark-teal Classes, purple Exams) show live counts for the day at a glance,
+            mirroring the popular My Study Life mobile app.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">02</span>
+          <span class="finding-text">
+            <strong>Three-project MVC solution</strong> — Views, Model, and Controller are
+            separate <code>.csproj</code> files inside one <code>.sln</code>, keeping the UI,
+            data, and orchestration concerns cleanly apart.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">03</span>
+          <span class="finding-text">
+            <strong>Six-tab sidebar navigation</strong> — Home, Dashboard, Calendar, Tasks,
+            Exams, and Search each get their own icon button in the left sidebar and swap the
+            right-side content panel without leaving the main window.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">04</span>
+          <span class="finding-text">
+            <strong>Entity-symmetric helpers</strong> — Task, Exam, and Class each have their
+            own <em>Filter</em>, <em>Search</em>, and <em>OverDue</em> methods, plus shared
+            <em>today</em>, <em>tomorrow</em>, and <em>findWeekCount</em> utilities for the
+            agenda views.
+          </span>
+        </li>
+        <li class="finding-item"><span class="finding-num">05</span>
+          <span class="finding-text">
+            <strong>Visible design evolution</strong> — the repo keeps five iterations of
+            <code>ModelClass</code> (v1 → v5) alongside multiple <em>today</em> and
+            <em>tomorrow</em> variants, making the project's refactoring history readable.
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 05 CONTRIBUTIONS + TOOLS -->
+  <div class="section-skills reveal">
+    <div class="rail-label">05<span>Contributions</span></div>
+    <ul class="learned-list">
+      <li class="learned-item"><span class="learned-num">01</span>
+        <span class="learned-text">
+          <strong>Reimagined My Study Life as a desktop app</strong> — built a WPF client that
+          mirrors the popular web/mobile planner with Material-style tiles, sidebar navigation,
+          and an offline SQL Server backend.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">02</span>
+        <span class="learned-text">
+          <strong>Three-project MVC solution</strong> — split the codebase into
+          <code>MyStudyLife</code> (View), <code>MyStudentLifeModel</code> (data + SQL Server),
+          and <code>MyStudentLifeController</code> (mediator + utilities) within one .sln.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">03</span>
+        <span class="learned-text">
+          <strong>Eight XAML views</strong> — designed and implemented StartUp landing,
+          SignIn / SignUp, Home / Home1, plus reusable user controls for the Dashboard tiles
+          and Search.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">04</span>
+        <span class="learned-text">
+          <strong>Entity-symmetric data helpers</strong> — built parallel Filter, Search, and
+          OverDue methods for Task, Exam, and Class, plus shared <em>today</em>,
+          <em>tomorrow</em>, and <em>findWeekCount</em> time utilities used across views.
+        </span>
+      </li>
+      <li class="learned-item"><span class="learned-num">05</span>
+        <span class="learned-text">
+          <strong>Iterative refactoring kept on record</strong> — five labeled ModelClass
+          iterations and multiple <em>today</em> / <em>tomorrow</em> variants document how
+          the data model and agenda logic evolved across versions.
+        </span>
+      </li>
+    </ul>
+    <table class="tools-table">
+      <tbody>
+        <tr><td>Language</td><td>C# · XAML</td></tr>
+        <tr><td>Framework</td><td>WPF · .NET</td></tr>
+        <tr><td>IDE</td><td>Visual Studio</td></tr>
+        <tr><td>Database</td><td>SQL Server local (DBMyStudyLife.mdf)</td></tr>
+        <tr><td>Solution</td><td>3 projects: MyStudyLife · MyStudentLifeModel · MyStudentLifeController</td></tr>
+        <tr><td>Views</td><td>StartUp · SignIn · SignUp · home · Home1 · App + DashBoard &amp; Search UserControls</td></tr>
+        <tr><td>Sidebar</td><td>Home · Dashboard · Calendar · Tasks · Exams · Search</td></tr>
+        <tr><td>Helpers</td><td>Filter / Search / OverDue per entity · today · tomorrow · findWeekCount · datetime · time_formatting</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CTA -->
+  <div class="section-cta reveal">
+    <div class="cta-text">
+      <h3>Browse the full repository</h3>
+      <p>Solution file, XAML views, model classes, and the SQL Server MDF are all on GitHub.</p>
+    </div>
+    <div class="btn-row">
+      <a href="https://github.com/NafeesKhandker/Students--Task-Management-Software" target="_blank" class="btn btn-primary">GitHub Repo ↗</a>
+      <a href="index.html#projects" class="btn btn-outline">All Projects</a>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<footer>
+  <p>Khandker Qaiduzzaman &nbsp;·&nbsp; khandkerm.com</p>
+  <p>Built with GitHub Pages · 2025</p>
+</footer>
+
+<script>
+// scroll reveal
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)} });
+}, {threshold:.07});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ══════════════════════════════════════════════════════════════
+// CHART 1 — XAML view sizes (bytes), counted directly from the repo
+// ══════════════════════════════════════════════════════════════
+const VIEWS = [
+  {view:'View_home',          bytes:17671, kind:'Window'},
+  {view:'View_SignUp',        bytes:6551,  kind:'Window'},
+  {view:'View_StartUp',       bytes:6135,  kind:'Window'},
+  {view:'View_SignIn',        bytes:2750,  kind:'Window'},
+  {view:'UserControlDashBoard', bytes:2153, kind:'UserControl'},
+  {view:'UserControlSearch',  bytes:2102,  kind:'UserControl'},
+  {view:'View_Home1',         bytes:419,   kind:'Window'},
+  {view:'App',                bytes:316,   kind:'App'},
+];
+Plotly.newPlot('views-chart',
+  [{
+    type:'bar', orientation:'h',
+    x: VIEWS.map(v=>v.bytes),
+    y: VIEWS.map(v=>v.view),
+    text: VIEWS.map(v=>v.bytes.toLocaleString()+' B · '+v.kind),
+    textposition:'outside',
+    textfont:{family:'JetBrains Mono, monospace', size:11, color:'#5a6a7a'},
+    marker:{
+      color: VIEWS.map(v => v.kind==='UserControl' ? '#9c27b0'
+                          : v.kind==='App' ? '#8a9aaa' : '#0e7c86'),
+      line:{color:'#fff', width:1}
+    },
+    hovertemplate:'<b>%{y}</b><br>%{x:,} bytes · %{customdata}<extra></extra>',
+    customdata: VIEWS.map(v=>v.kind)
+  }],
+  {
+    yaxis:{automargin:true, autorange:'reversed', tickfont:{family:'JetBrains Mono, monospace', size:11}},
+    xaxis:{title:{text:'File size (bytes)', font:{size:11}}, range:[0,22000],
+           showgrid:true, gridcolor:'#dde5ed', linecolor:'#dde5ed'},
+    margin:{t:24, b:40, l:160, r:20},
+    paper_bgcolor:'white', plot_bgcolor:'white', showlegend:false
+  },
+  {responsive:true, displayModeBar:true,
+   modeBarButtonsToRemove:['toImage','sendDataToCloud'], displaylogo:false}
+);
+
+// ══════════════════════════════════════════════════════════════
+// CHART 2 — Helper methods grouped by entity domain
+// Files counted from the repo root + Controller/Model folders.
+// ══════════════════════════════════════════════════════════════
+const DOMAINS = [
+  {dom:'Tasks',   count:7, items:'FilterTask · SearchTask · today · today_v2 · today_tomorrw · tomorrow · tomorrow_v2'},
+  {dom:'Exams',   count:5, items:'FilterExam · SearchExam · PastExam · PastExam v2 · OverDueCurrentExam'},
+  {dom:'Classes', count:4, items:'FilterClass · SearchClass · HomeClass · OverDueClass v2'},
+  {dom:'Model',   count:5, items:'ModelClass v1–v5 (iterative refactoring)'},
+  {dom:'Util',    count:3, items:'findWeekCount · datetime · time_formatting'},
+  {dom:'Auth',    count:2, items:'User · mysql insert'},
+];
+Plotly.newPlot('modules-chart',
+  [{
+    type:'bar',
+    x: DOMAINS.map(m=>m.dom),
+    y: DOMAINS.map(m=>m.count),
+    text: DOMAINS.map(m=>m.count+' file'+(m.count===1?'':'s')),
+    textposition:'outside',
+    textfont:{family:'JetBrains Mono, monospace', size:11, color:'#0b2545'},
+    marker:{
+      color:['#00bcd4','#9c27b0','#00897b','#235289','#5a6a7a','#0e7c86'],
+      line:{color:'#fff', width:1}
+    },
+    hovertemplate:'<b>%{x}</b><br>%{y} file(s)<br>%{customdata}<extra></extra>',
+    customdata: DOMAINS.map(m=>m.items)
+  }],
+  {
+    yaxis:{title:{text:'Helper / model files', font:{size:11}}, range:[0,9],
+           showgrid:true, gridcolor:'#dde5ed', linecolor:'#dde5ed'},
+    xaxis:{linecolor:'#dde5ed', tickfont:{size:12}},
+    margin:{t:24, b:50, l:60, r:20},
+    paper_bgcolor:'white', plot_bgcolor:'white', showlegend:false
+  },
+  {responsive:true, displayModeBar:true,
+   modeBarButtonsToRemove:['toImage','sendDataToCloud'], displaylogo:false}
+);
+</script>
+</body>
+</html>
